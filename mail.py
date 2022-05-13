@@ -7,7 +7,7 @@ from email.mime.multipart import MIMEMultipart
 
 class MailSend(object):
 
-    def __init__(self, from_addr: list = [], 
+    def __init__(self, from_addr: list = ["singkuserver@gmail.com"], 
                 to_addr: list = [],
                 subject: str = 'Testing Mail system ... Do Not reply',
                 msg: dict = {}, 

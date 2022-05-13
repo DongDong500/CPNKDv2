@@ -1,4 +1,3 @@
-from distutils import dep_util
 import os
 import json
 import argparse
@@ -9,13 +8,29 @@ import time
 
 import torch
 from mail import MailSend
-from alphaTrain import train
+from kdTrain import train
 import network
+
+LOGIN = {
+    3 : "/mnt/server5/sdi/login.json",
+    4 : "/mnt/server5/sdi/login.json",
+    5 : "/data1/sdi/login.json"
+}
+DEFAULT_DIR = {
+    3 : "/mnt/server5/sdi",
+    4 : "/mnt/server5/sdi",
+    5 : "/data1/sdi"
+}
+DATA_DIR = {
+    3 : "/mnt/server5/sdi/datasets",
+    4 : "/mnt/server5/sdi/datasets",
+    5 : "/data1/sdi/datasets"
+}
 
 def get_argparser():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--default_path", type=str, default="/data1/sdi/CPNnetV1-result/", 
+    parser.add_argument("--default_path", type=str, default="/data1/sdi/CPNKD-result/",
                         help="path to results")
     parser.add_argument("--current_time", type=str, default=None,
                         help="results images folder name (default: current time)")
@@ -99,19 +114,25 @@ def get_argparser():
     parser.add_argument("--continue_training", action='store_true', default=False,
                         help="restore state from reserved params (defaults: false)")
 
+    # Log-in info
+    parser.add_argument("--login_dir", type=str, default="/login.json",
+                        help="path to user log-in info json file (default: /login.json)")
+    parser.add_argument("--cur_work_server", type=int, default=5,
+                        help="current working server (default: 5)")
     # Run Demo
     parser.add_argument("--run_demo", action='store_true', default=False)
 
     return parser
 
-def smail(subject: str = 'default subject', body: dict = {}):
+def smail(subject: str = 'default subject', body: dict = {}, login_dir: str = ''):
     ''' send short report mail (smtp) 
     '''
+    # Mail options
     to_addr = ['sdimivy014@korea.ac.kr']
-    from_addr = ['donotreply@korea.ac.kr']
+    from_addr = ['singkuserver@korea.ac.kr']
 
     ms = MailSend(subject=subject, msg=body,
-                    login_dir='/data1/sdi/login.json',
+                    login_dir=login_dir,
                     ID='singkuserver',
                     to_addr=to_addr, from_addr=from_addr)
     ms()
@@ -120,6 +141,36 @@ def smail(subject: str = 'default subject', body: dict = {}):
 if __name__ == '__main__':
 
     opts = get_argparser().parse_args()
+
+    print('basename:    ', os.path.basename(__file__)) # main.py
+    print('dirname:     ', os.path.dirname(__file__)) # /data1/sdi/CPNKD
+    print('abspath:     ', os.path.abspath(__file__)) # /data1/sdi/CPNKD/main.py
+    print('abs dirname: ', os.path.dirname(os.path.abspath(__file__))) # /data1/sdi/CPNKD
+
+    if socket.gethostname() == "server3":
+        opts.cur_work_server = 3
+        opts.login_dir = LOGIN[3]
+        opts.default_path = os.path.join(DEFAULT_DIR[3], os.path.dirname(__file__).split('/')[-1]+'-result')
+        opts.data_root = DATA_DIR[3]
+    elif socket.gethostname() == "server4":
+        opts.cur_work_server = 4
+        opts.login_dir = LOGIN[4]
+        opts.default_path = os.path.join(DEFAULT_DIR[5], os.path.dirname(__file__).split('/')[-1]+'-result')
+        opts.data_root = DATA_DIR[4]
+    elif socket.gethostname() == "server5":
+        opts.cur_work_server = 5
+        opts.login_dir = LOGIN[5]
+        opts.default_path = os.path.join(DEFAULT_DIR[5], os.path.dirname(__file__).split('/')[-1]+'-result')
+        opts.data_root = DATA_DIR[5]
+    else:
+        raise NotImplementedError
+    
+    if not os.path.exists(opts.login_dir):
+        raise FileNotFoundError("login.json file not found (path: {})".format(opts.login_dir))
+    if not os.path.exists(opts.default_path):
+        raise Exception("default path directory not found (path: {})".format(opts.default_path))
+    if not os.path.exists(opts.data_root):
+        raise Exception("data root directory not found (path: {})".format(opts.data_root))
     
     os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
     os.environ['CUDA_VISIBLE_DEVICES'] = str(opts.gpus)
@@ -213,7 +264,7 @@ if __name__ == '__main__':
             J = 0
 
             mlog['time elapsed'] = 'Time elapsed (h:m:s.ms) {}'.format(datetime.now() - mid_time)
-            smail(subject="Short report-{}".format(loss_choice[i]), body=mlog)
+            smail(subject="Short report-{}".format(loss_choice[i]), body=mlog, login_dir=opts.login_dir)
             mlog = {}
             os.remove(os.path.join(opts.default_path, 'mlog.json'))
 

@@ -8,3 +8,4 @@ from .entropydice import EntropyDiceLoss
 from .focal import FocalLoss
 from .dice import DiceLoss
 from .crossentropy import CrossEntropyLoss
+from .kdloss import KDLoss
