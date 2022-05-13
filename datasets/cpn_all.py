@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     for j in dlist:
             
-        dst = CPNALLSegmentation(root='/data/sdi/datasets', datatype=j, image_set='val',
+        dst = CPNALLSegmentation(root='/data1/sdi/datasets', datatype=j, image_set='val',
                                     transform=transform, is_rgb=True)
         train_loader = DataLoader(dst, batch_size=5,
                                     shuffle=True, num_workers=2, drop_last=True)
