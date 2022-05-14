@@ -109,12 +109,10 @@ def build_log(opts, LOGDIR) -> SummaryWriter:
         opts.save_ckpt = logdir
 
     # Save Options description
-    with open(os.path.join(LOGDIR, 'summary.json'), 'w') as f:
-        jsummary = {}
-        for key, val in vars(opts).items():
-            jsummary[key] = val
-            #f.write("{} : {}\n".format(k, v))
-        json.dump(jsummary, f, indent=2)
+    jsummary = {}
+    for key, val in vars(opts).items():
+        jsummary[key] = val
+    utils.save_dict_to_json(jsummary, os.path.join(LOGDIR, 'summary.json'))
 
     return writer
 

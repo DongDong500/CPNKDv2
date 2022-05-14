@@ -58,16 +58,16 @@ def mkdir(path):
     if not os.path.exists(path):
         os.mkdir(path)
 
-def save_dict_to_json(d, json_path):
+def save_dict_to_json(d: dict, json_path: str):
     """Saves dict of floats in json file
 
     Args:
-        d: (dict) of float-castable values (np.float, int, float, etc.)
+        d: dict
         json_path: (string) path to json file
     """
     with open(json_path, 'w') as f:
         # We need to convert the values to float for json (it doesn't accept np.array, np.float, )
-        d = {k: float(v) for k, v in d.items()}
+        d = {k: v for k, v in d.items()}
         json.dump(d, f, indent=4)
 
 class Params():
@@ -110,5 +110,16 @@ if __name__ == "__main__":
     print(type(pram.separable_conv)) # bool
     print(type(pram.num_classes)) # int
     print(type(pram.weight_decay)) # float
-    print(type(pram.ckpt)) #str
+    print(type(pram.ckpt)) # str
     print(pram.__dict__) # dict
+
+    save_dict_to_json(pram.__dict__, "/data1/sdi/CPNKD/utils/sample/sample.json")
+
+    pram = Params(json_path="/data1/sdi/CPNKD/utils/sample/sample.json")
+    print(type(pram.Class_F1)) # list
+    print(type(pram.Class_IoU)) # dict
+    print(type(pram.separable_conv)) # bool
+    print(type(pram.num_classes)) # int
+    print(type(pram.weight_decay)) # float
+    print(type(pram.ckpt)) # str
+    print(pram.dict) # dict
