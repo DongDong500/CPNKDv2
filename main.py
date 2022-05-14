@@ -37,7 +37,7 @@ def get_argparser():
     # Tensorboard options
     parser.add_argument("--Tlog_dir", type=str, default=None,
                         help="path to tensorboard log")
-    parser.add_argument("--save_log", action='store_true', default=False, 
+    parser.add_argument("--save_log", action='store_true', default=True, 
                         help="save log to default path (default: False)")
     # Model options
     available_models = sorted(name for name in network.model.__dict__ if name.islower() and \

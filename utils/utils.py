@@ -1,6 +1,7 @@
 from torchvision.transforms.functional import normalize
 import torch.nn as nn
 import numpy as np
+import json
 import os 
 
 def cmap(N=256, normalized=False):
@@ -56,3 +57,58 @@ def fix_bn(model):
 def mkdir(path):
     if not os.path.exists(path):
         os.mkdir(path)
+
+def save_dict_to_json(d, json_path):
+    """Saves dict of floats in json file
+
+    Args:
+        d: (dict) of float-castable values (np.float, int, float, etc.)
+        json_path: (string) path to json file
+    """
+    with open(json_path, 'w') as f:
+        # We need to convert the values to float for json (it doesn't accept np.array, np.float, )
+        d = {k: float(v) for k, v in d.items()}
+        json.dump(d, f, indent=4)
+
+class Params():
+    """Class that loads hyperparameters from a json file.
+
+    Example:
+    ```
+    params = Params(json_path)
+    print(params.learning_rate)
+    params.learning_rate = 0.5  # change the value of learning_rate in params
+    ```
+    """
+    def __init__(self, json_path):
+        with open(json_path) as f:
+            params = json.load(f)
+            self.__dict__.update(params)
+
+    def save(self, json_path):
+        with open(json_path, 'w') as f:
+            json.dump(self.__dict__, f, indent=4)
+            
+    def update(self, json_path):
+        """Loads parameters from json file"""
+        with open(json_path) as f:
+            params = json.load(f)
+            self.__dict__.update(params)
+
+    @property
+    def dict(self):
+        """Gives dict-like access to Params instance by `params.dict['learning_rate']"""
+        return self.__dict__
+
+if __name__ == "__main__":
+
+    json_path = "/data1/sdi/CPNKD/utils/sample/summary.json"
+
+    pram = Params(json_path=json_path)
+    print(type(pram.Class_F1)) # list
+    print(type(pram.Class_IoU)) # dict
+    print(type(pram.separable_conv)) # bool
+    print(type(pram.num_classes)) # int
+    print(type(pram.weight_decay)) # float
+    print(type(pram.ckpt)) #str
+    print(pram.__dict__) # dict
