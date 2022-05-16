@@ -79,6 +79,7 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Device: %s" % device)
 
+
     if os.path.exists(os.path.join(opts.default_path, 'log.json')):
         resume = True
         jog = utils.Params(os.path.join(opts.default_path, 'log.json')).__dict__
@@ -147,19 +148,20 @@ if __name__ == '__main__':
                     ''' 
                         Ex) {"Model" : model_choice[j], "F1-0" : "0.9", "F1-1" : "0.1"}
                     '''
-                    #mlog[key] = {"Model" : model_choice[j], "F1-0" : "0.9", "F1-1" : "0.1"}
+                    mlog[key] = {"Model" : model_choice[j], "F1-0" : "0.9", "F1-1" : "0.1"}
                     #mlog[key] = train(devices=device, opts=opts, LOGDIR=logdir)
-                    #time.sleep(5)
+                    time.sleep(5)
                     time_elapsed = datetime.now() - start_time
 
                     with open(os.path.join(opts.default_path, 'mlog.json'), "w") as f:
                         ''' JSON treats keys as strings
                         '''
-                        json.dump(mlog, f, indent=2)
+                        json.dump(mlog, f, indent=4)
                     
-                    if os.path.exists(os.path.join(logdir, 'summary.txt')):
-                        with open(os.path.join(logdir, 'summary.txt'), 'a') as f:
-                            f.write('Time elapsed (h:m:s) {}'.format(time_elapsed))
+                    if os.path.exists(os.path.join(logdir, 'summary.json')):
+                        params = utils.Params(json_path=os.path.join(logdir, 'summary.json')).dict
+                        params["time_elpased"] = time_elapsed
+                        utils.save_dict_to_json(d=params, json_path=os.path.join(logdir, 'summary.json'))
                 K = 0
             J = 0
 

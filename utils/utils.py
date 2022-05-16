@@ -65,10 +65,36 @@ def save_dict_to_json(d: dict, json_path: str):
         d: dict
         json_path: (string) path to json file
     """
-    with open(json_path, 'w') as f:
-        # We need to convert the values to float for json (it doesn't accept np.array, np.float, )
-        d = {k: v for k, v in d.items()}
-        json.dump(d, f, indent=4)
+    if not os.path.exists(json_path):
+        with open(json_path, 'w') as f:
+            # We need to convert the values to float for json (it doesn't accept np.array, np.float, )
+            d = {k: v for k, v in d.items()}
+            json.dump(d, f, indent=4)
+    else:
+        with open(json_path, 'r') as f:
+            jdict = json.load(f)
+        for key, val in d.items():
+            jdict[key] = val
+        with open(json_path, 'w') as f:
+            json.dump(jdict, f, indent=4)
+
+def txt_to_json(txt_path: str):
+    """Convert 'summary.txt' to 'summary.json'
+    """
+
+    with open(txt_path, "r") as f:
+        s = [x.split(" : ") for x in f.readlines()]
+    
+    jdict = {}
+    for x in s:
+        if len(x) == 2:
+            jdict[x[0].strip()] = x[1].strip()
+        else:
+            jdict["Time elapsed"] = x
+
+    save_dict_to_json(jdict, os.path.join(os.path.dirname(txt_path), 'summary.json'))
+
+    return jdict
 
 class Params():
     """Class that loads hyperparameters from a json file.
@@ -100,10 +126,11 @@ class Params():
         """Gives dict-like access to Params instance by `params.dict['learning_rate']"""
         return self.__dict__
 
+
 if __name__ == "__main__":
 
+    """
     json_path = "/data1/sdi/CPNKD/utils/sample/summary.json"
-
     pram = Params(json_path=json_path)
     print(type(pram.Class_F1)) # list
     print(type(pram.Class_IoU)) # dict
@@ -112,7 +139,6 @@ if __name__ == "__main__":
     print(type(pram.weight_decay)) # float
     print(type(pram.ckpt)) # str
     print(pram.__dict__) # dict
-
     save_dict_to_json(pram.__dict__, "/data1/sdi/CPNKD/utils/sample/sample.json")
 
     pram = Params(json_path="/data1/sdi/CPNKD/utils/sample/sample.json")
@@ -123,3 +149,11 @@ if __name__ == "__main__":
     print(type(pram.weight_decay)) # float
     print(type(pram.ckpt)) # str
     print(pram.dict) # dict
+    pram = Params(json_path="/data1/sdi/CPNKD/utils/sample/mlog.json")
+    save_dict_to_json(pram.__dict__, "/data1/sdi/CPNKD/utils/sample/sample.json")
+    """
+    for x in os.listdir('/data1/sdi/CPNnetV1-result/'):
+        for y in os.listdir(os.path.join('/data1/sdi/CPNnetV1-result/', x)):
+            f_path = os.path.join('/data1/sdi/CPNnetV1-result/', x, y, 'summary.txt')
+            txt_to_json(f_path)
+    
