@@ -140,15 +140,16 @@ def validate(opts, s_model, t_model, loader, device, metrics, epoch, criterion):
     return score, epoch_loss
 
 def load_model(opts: ArgumentParser = None, model_name: str = '', msg: str = '', 
-                verbose: bool = False, pretrain: str = None):
+                verbose: bool = False, pretrain: str = None, 
+                output_stride: int = 8, sep_conv: bool = False):
     
     print("<load model>", msg) if verbose else 0
 
     try:    
         if model_name.startswith("deeplab"):
             model = network.model.__dict__[model_name](channel=3 if opts.is_rgb else 1, 
-                                                        num_classes=opts.num_classes, output_stride=opts.output_stride)
-            if opts.separable_conv and 'plus' in model_name:
+                                                        num_classes=opts.num_classes, output_stride=output_stride)
+            if sep_conv and 'plus' in model_name:
                 network.convert_to_separable_conv(model.classifier)
             utils.set_bn_momentum(model.backbone, momentum=0.01)
         else:
@@ -197,9 +198,11 @@ def train(opts, devices, LOGDIR) -> dict:
     ''' (3 -1) Load teacher & student models
     '''
     t_model = load_model(opts=opts, model_name=opts.t_model, verbose=True,
-                            msg=" Teacher model selection: {}".format(opts.t_model)).to(devices)
+                            msg=" Teacher model selection: {}".format(opts.t_model),
+                            output_stride=opts.t_output_stride, sep_conv=opts.t_separable_conv).to(devices)
     s_model = load_model(opts=opts, model_name=opts.s_model, verbose=True,
-                            msg=" Student model selection: {}".format(opts.s_model))
+                            msg=" Student model selection: {}".format(opts.s_model),
+                            output_stride=opts.output_stride, sep_conv=opts.separable_conv)
 
     ''' (4) Set up optimizer
     '''
@@ -346,3 +349,36 @@ def train(opts, devices, LOGDIR) -> dict:
         if opts.run_demo and epoch > 3:
             print("Run demo !!!")
             break
+
+    if opts.val_results:
+        with open(os.path.join(LOGDIR, 'summary.txt'), 'a') as f:
+            for k, v in B_val_score.items():
+                f.write("{} : {}\n".format(k, v))
+
+        if opts.save_model:
+            checkpoint = torch.load(os.path.join(opts.save_ckpt, 'dicecheckpoint.pt'), map_location=devices)
+            s_model.load_state_dict(checkpoint["model_state"])
+            sdir = os.path.join(opts.val_results_dir, 'epoch_{}'.format(B_epoch))
+            utils.save(sdir, s_model, val_loader, devices, opts.is_rgb)
+            del checkpoint
+            del s_model
+            torch.cuda.empty_cache()
+        else:
+            checkpoint = torch.load(os.path.join(opts.save_ckpt, 'dicecheckpoint.pt'), map_location=devices)
+            s_model.load_state_dict(checkpoint["model_state"])
+            sdir = os.path.join(opts.val_results_dir, 'epoch_{}'.format(B_epoch))
+            utils.save(sdir, s_model, val_loader, devices, opts.is_rgb)
+            del checkpoint
+            del s_model
+            torch.cuda.empty_cache()
+            if os.path.exists(os.path.join(opts.save_ckpt, 'checkpoint.pt')):
+                os.remove(os.path.join(opts.save_ckpt, 'checkpoint.pt'))
+            if os.path.exists(os.path.join(opts.save_ckpt, 'dicecheckpoint.pt')):
+                os.remove(os.path.join(opts.save_ckpt, 'dicecheckpoint.pt'))
+            os.rmdir(os.path.join(opts.save_ckpt))
+
+    return {
+            'Model' : opts.s_model, 'Dataset' : opts.dataset,
+            'Policy' : opts.lr_policy, 'OS' : str(opts.output_stride), 'Epoch' : str(B_epoch),
+            'F1 [0]' : "{:.2f}".format(B_val_score['Class F1'][0]), 'F1 [1]' : "{:.2f}".format(B_val_score['Class F1'][1])
+            }

@@ -79,21 +79,17 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Device: %s" % device)
 
-
     if os.path.exists(os.path.join(opts.default_path, 'log.json')):
         resume = True
         jog = utils.Params(os.path.join(opts.default_path, 'log.json')).__dict__
     else:
         resume = False
         jog = {
-                'loss_choice' : 0,
-                'model_choice' : 0,
-                'output_stride_choice' : 0,
+                's_model_choice' : 0,
+                't_model_choice' : 0,
+                't_model_params' : 0,
                 'current_working_dir' : 0
                 }
-    I = jog['loss_choice']
-    J = jog['model_choice']
-    K = jog['output_stride_choice']
 
     if os.path.exists(os.path.join(opts.default_path, 'mlog.json')):
         mlog = utils.Params(os.path.join(opts.default_path, 'mlog.json')).__dict__
@@ -102,74 +98,54 @@ if __name__ == '__main__':
 
     total_time = datetime.now()
     try:
-        loss_choice = ['ap_entropy_dice_loss', 'ap_cross_entropy']
-        model_choice = ['deeplabv3plus_resnet101', 'deeplabv3plus_resnet50']
-        output_stride_choice = [8, 16, 32, 64]
+        opts.Tlog_dir = opts.default_path
+        opts.loss_type = 'kd_loss'
+        opts.s_model = 'deeplabv3plus_resnet50'
+        opts.t_model = 'deeplabv3plus_resnet50'
+        opts.t_model_params = '/data1/sdi/CPNnetV1-result/deeplabv3plus_resnet50/May17_07-37-30_CPN_six/best_param/dicecheckpoint.pt'
+        opts.output_stride = 32
+        opts.t_output_stride = 32
 
-        for i in range(len(loss_choice)):
-            if i < I:
-                continue  
-            mid_time = datetime.now()
-            for j in range(len(model_choice)):
-                if j < J:
-                    continue
-                for k in range(len(output_stride_choice)):
-                    if k < K:
-                        continue
-                    opts.Tlog_dir = opts.default_path
-                    opts.loss_type = loss_choice[i]
-                    opts.model = model_choice[j]
-                    opts.output_stride = output_stride_choice[k]
-                    print("i: {}, j: {}, k: {}".format(i, j, k))
+        if resume and not opts.run_demo:
+            resume = False
+            logdir = jog['current_working_dir']
+            opts.current_time = "resume"
+            opts.ckpt = os.path.join(logdir, 'best_param', 'checkpoint.pt')
+            resume = False
+        elif not resume and not opts.run_demo:
+            opts.current_time = datetime.now().strftime('%b%d_%H-%M-%S')
+            logdir = os.path.join(opts.Tlog_dir, opts.model, opts.current_time + '_' + opts.dataset)
+        else:
+            opts.current_time = datetime.now().strftime('%b%d_%H-%M-%S')
+            logdir = os.path.join(opts.Tlog_dir, opts.model, opts.current_time + '_' + opts.dataset + '_demo')
 
-                    if resume and not opts.run_demo:
-                        resume = False
-                        logdir = jog['current_working_dir']
-                        opts.current_time = "resume"
-                        opts.ckpt = os.path.join(logdir, 'best_param', 'checkpoint.pt')
-                        resume = False
-                    elif not resume and not opts.run_demo:
-                        opts.current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-                        logdir = os.path.join(opts.Tlog_dir, opts.model, opts.current_time + '_' + opts.dataset)
-                    else:
-                        opts.current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-                        logdir = os.path.join(opts.Tlog_dir, opts.model, opts.current_time + '_' + opts.dataset + '_demo')
+        # leave log
+        with open(os.path.join(opts.default_path, 'log.json'), "w") as f:
+            jog['s_model_choice'] = opts.s_model
+            jog['t_model_choice'] = opts.t_model
+            jog['t_model_params'] = opts.t_model_params
+            jog['current_working_dir'] = logdir
+            json.dump(jog, f, indent=4)
 
-                    # leave log
-                    with open(os.path.join(opts.default_path, 'log.json'), "w") as f:
-                        jog['loss_choice'] = i
-                        jog['model_choice'] = j
-                        jog['output_stride_choice'] = k
-                        jog['current_working_dir'] = logdir
-                        json.dump(jog, f, indent=2)
+        start_time = datetime.now()
+        mlog['Single experimnet'] = train(devices=device, opts=opts, LOGDIR=logdir)
+        time_elapsed = datetime.now() - start_time
 
-                    start_time = datetime.now()
-                    key = str(i*len(model_choice)*len(output_stride_choice) + j*len(output_stride_choice) + k)
-                    ''' 
-                        Ex) {"Model" : model_choice[j], "F1-0" : "0.9", "F1-1" : "0.1"}
-                    '''
-                    mlog[key] = {"Model" : model_choice[j], "F1-0" : "0.9", "F1-1" : "0.1"}
-                    #mlog[key] = train(devices=device, opts=opts, LOGDIR=logdir)
-                    time.sleep(5)
-                    time_elapsed = datetime.now() - start_time
+        with open(os.path.join(opts.default_path, 'mlog.json'), "w") as f:
+            ''' JSON treats keys as strings
+            '''
+            json.dump(mlog, f, indent=4)
+        
+        if os.path.exists(os.path.join(logdir, 'summary.json')):
+            params = utils.Params(json_path=os.path.join(logdir, 'summary.json')).dict
+            params["time_elpased"] = str(time_elapsed)
+            utils.save_dict_to_json(d=params, json_path=os.path.join(logdir, 'summary.json'))
 
-                    with open(os.path.join(opts.default_path, 'mlog.json'), "w") as f:
-                        ''' JSON treats keys as strings
-                        '''
-                        json.dump(mlog, f, indent=4)
-                    
-                    if os.path.exists(os.path.join(logdir, 'summary.json')):
-                        params = utils.Params(json_path=os.path.join(logdir, 'summary.json')).dict
-                        params["time_elpased"] = time_elapsed
-                        utils.save_dict_to_json(d=params, json_path=os.path.join(logdir, 'summary.json'))
-                K = 0
-            J = 0
-
-            mlog['time elapsed'] = 'Time elapsed (h:m:s.ms) {}'.format(datetime.now() - mid_time)
-            smail(subject="Short report-{}".format(loss_choice[i]), body=mlog, login_dir=opts.login_dir)
-            mlog = {}
-            os.remove(os.path.join(opts.default_path, 'mlog.json'))
-
+        mlog['time elapsed'] = 'Time elapsed (h:m:s.ms) {}'.format(time_elapsed)
+        smail(subject="Short report-{}".format("CPN Knowledge distillation"), body=mlog, login_dir=opts.login_dir)
+        mlog = {}
+        
+        os.remove(os.path.join(opts.default_path, 'mlog.json'))
         os.remove(os.path.join(opts.default_path, 'log.json'))
 
     except KeyboardInterrupt:

@@ -29,6 +29,10 @@ def get_argparser():
                         help="apply separable conv to decoder and aspp (default: False)")
     parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16, 32, 64],
                         help="output stride (default: 16)")
+    parser.add_argument("--t_separable_conv", action='store_true', default=False,
+                        help="teacher model: apply separable conv to decoder and aspp (default: False)")
+    parser.add_argument("--t_output_stride", type=int, default=16, choices=[8, 16, 32, 64],
+                        help="teacher model: output stride (default: 16)")
     # Dataset options
     parser.add_argument("--num_workers", type=int, default=4,
                         help="number of workers (default: 4)")
