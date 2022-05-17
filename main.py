@@ -66,7 +66,8 @@ if __name__ == '__main__':
     elif socket.gethostname() == "server5":
         opts.cur_work_server = 5
         opts.login_dir = LOGIN[5]
-        opts.default_path = os.path.join(DEFAULT_DIR[5], os.path.dirname(__file__).split('/')[-1]+'-result')
+        opts.default_path = os.path.join(DEFAULT_DIR[5], os.path.dirname(
+                                                os.path.abspath(__file__)).split('/')[-1]+'-result')
         opts.data_root = DATA_DIR[5]
     else:
         raise NotImplementedError
@@ -114,10 +115,10 @@ if __name__ == '__main__':
             resume = False
         elif not resume and not opts.run_demo:
             opts.current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-            logdir = os.path.join(opts.Tlog_dir, opts.model, opts.current_time + '_' + opts.dataset)
+            logdir = os.path.join(opts.Tlog_dir, opts.s_model, opts.current_time + '_' + opts.dataset)
         else:
             opts.current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-            logdir = os.path.join(opts.Tlog_dir, opts.model, opts.current_time + '_' + opts.dataset + '_demo')
+            logdir = os.path.join(opts.Tlog_dir, opts.s_model, opts.current_time + '_' + opts.dataset + '_demo')
 
         # leave log
         with open(os.path.join(opts.default_path, 'log.json'), "w") as f:
@@ -142,9 +143,9 @@ if __name__ == '__main__':
             utils.save_dict_to_json(d=params, json_path=os.path.join(logdir, 'summary.json'))
 
         mlog['time elapsed'] = 'Time elapsed (h:m:s.ms) {}'.format(time_elapsed)
-        smail(subject="Short report-{}".format("CPN Knowledge distillation"), body=mlog, login_dir=opts.login_dir)
+        #smail(subject="Short report-{}".format("CPN Knowledge distillation"), body=mlog, login_dir=opts.login_dir)
         mlog = {}
-        
+
         os.remove(os.path.join(opts.default_path, 'mlog.json'))
         os.remove(os.path.join(opts.default_path, 'log.json'))
 

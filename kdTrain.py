@@ -158,11 +158,10 @@ def load_model(opts: ArgumentParser = None, model_name: str = '', msg: str = '',
     except:
         raise Exception("<load model> Error occured while loading a model.")
 
-    if torch.cuda.device_count() > 1:
-        model = nn.DataParallel(model)
-
     if pretrain is not None and os.path.isfile(pretrain):
-        print("<load model> Model restored from %s" % pretrain)
+        print("<load model> restored parameters from %s" % pretrain)
+        if torch.cuda.device_count() > 1:
+            model = nn.DataParallel(model)
         checkpoint = torch.load(pretrain, map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint["model_state"])
         del checkpoint  # free memory
@@ -198,8 +197,10 @@ def train(opts, devices, LOGDIR) -> dict:
     ''' (3 -1) Load teacher & student models
     '''
     t_model = load_model(opts=opts, model_name=opts.t_model, verbose=True,
+                            pretrain=opts.t_model_params,
                             msg=" Teacher model selection: {}".format(opts.t_model),
                             output_stride=opts.t_output_stride, sep_conv=opts.t_separable_conv).to(devices)
+    
     s_model = load_model(opts=opts, model_name=opts.s_model, verbose=True,
                             msg=" Student model selection: {}".format(opts.s_model),
                             output_stride=opts.output_stride, sep_conv=opts.separable_conv)
@@ -235,6 +236,8 @@ def train(opts, devices, LOGDIR) -> dict:
     ''' (5) Resume student model & scheduler
     '''
     if opts.ckpt is not None and os.path.isfile(opts.ckpt):
+        if torch.cuda.device_count() > 1:
+            s_model = nn.DataParallel(s_model)
         checkpoint = torch.load(opts.ckpt, map_location=torch.device('cpu'))
         s_model.load_state_dict(checkpoint["model_state"])
         s_model.to(devices)
@@ -251,6 +254,8 @@ def train(opts, devices, LOGDIR) -> dict:
     else:
         print("[!] Train from scratch...")
         resume_epoch = 0
+        if torch.cuda.device_count() > 1:
+            s_model = nn.DataParallel(s_model)
         s_model.to(devices)
 
     ''' (6) Set up metrics
@@ -351,9 +356,10 @@ def train(opts, devices, LOGDIR) -> dict:
             break
 
     if opts.val_results:
-        with open(os.path.join(LOGDIR, 'summary.txt'), 'a') as f:
-            for k, v in B_val_score.items():
-                f.write("{} : {}\n".format(k, v))
+        params = utils.Params(json_path=os.path.join(LOGDIR, 'summary.json')).dict
+        for k, v in B_val_score.items():
+            params[k] = v
+        utils.save_dict_to_json(d=params, json_path=os.path.join(LOGDIR, 'summary.json'))
 
         if opts.save_model:
             checkpoint = torch.load(os.path.join(opts.save_ckpt, 'dicecheckpoint.pt'), map_location=devices)
