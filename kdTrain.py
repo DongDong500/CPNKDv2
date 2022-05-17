@@ -1,6 +1,3 @@
-import argparse
-from tabnanny import check
-from more_itertools import map_except
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -16,6 +13,7 @@ import json
 import random
 import socket
 from tqdm import tqdm
+from argparse import ArgumentParser
 
 from PIL import Image
 
@@ -28,12 +26,9 @@ from utils import histeq as hq
 
 
 def get_dataset(opts):
-    if opts.is_rgb:
-        mean = [0.485, 0.456, 0.406]
-        std = [0.229, 0.224, 0.225]
-    else:
-        mean = [0.485]
-        std = [0.229]
+
+    mean = [0.485, 0.456, 0.406] if opts.is_rgb else [0.485]
+    std = [0.229, 0.224, 0.225] if opts.is_rgb else [0.229]
 
     train_transform = et.ExtCompose([
         et.ExtResize(size=opts.resize),
@@ -82,7 +77,6 @@ def get_dataset(opts):
     
     return train_dst, val_dst
 
-
 def build_log(opts, LOGDIR) -> SummaryWriter:
     # Tensorboard option
     if opts.save_log:
@@ -116,8 +110,7 @@ def build_log(opts, LOGDIR) -> SummaryWriter:
 
     return writer
 
-
-def validate(opts, model, loader, device, metrics, epoch, criterion):
+def validate(opts, s_model, t_model, loader, device, metrics, epoch, criterion):
 
     metrics.reset()
     ret_samples = []
@@ -129,23 +122,14 @@ def validate(opts, model, loader, device, metrics, epoch, criterion):
             images = images.to(device)
             labels = labels.to(device)
 
-            outputs = model(images)
-            probs = nn.Softmax(dim=1)(outputs)
+            s_outputs = s_model(images)
+            probs = nn.Softmax(dim=1)(s_outputs)
             preds = torch.max(probs, 1)[1].detach().cpu().numpy()
             target = labels.detach().cpu().numpy()
 
-            if opts.loss_type == 'ap_cross_entropy':
-                weights = labels.detach().cpu().numpy().sum() / (labels.shape[0] * labels.shape[1] * labels.shape[2])
-                weights = torch.tensor([weights, 1-weights], dtype=float32).to(device)
-                criterion = utils.CrossEntropyLoss(weight=weights)
-                loss = criterion(outputs, labels)
-            elif opts.loss_type == 'ap_entropy_dice_loss':
-                weights = labels.detach().cpu().numpy().sum() / (labels.shape[0] * labels.shape[1] * labels.shape[2])
-                weights = torch.tensor([weights, 1-weights], dtype=float32).to(device)
-                criterion = utils.EntropyDiceLoss(weight=weights)
-                loss = criterion(outputs, labels)
-            else:
-                loss = criterion(outputs, labels)
+            t_outputs = t_model(images)
+
+            loss = criterion(s_outputs, t_outputs, labels)
 
             metrics.update(target, preds)
             running_loss += loss.item() * images.size(0)
@@ -155,6 +139,35 @@ def validate(opts, model, loader, device, metrics, epoch, criterion):
 
     return score, epoch_loss
 
+def load_model(opts: ArgumentParser = None, model_name: str = '', msg: str = '', 
+                verbose: bool = False, pretrain: str = None):
+    
+    print("<load model>", msg) if verbose else 0
+
+    try:    
+        if model_name.startswith("deeplab"):
+            model = network.model.__dict__[model_name](channel=3 if opts.is_rgb else 1, 
+                                                        num_classes=opts.num_classes, output_stride=opts.output_stride)
+            if opts.separable_conv and 'plus' in model_name:
+                network.convert_to_separable_conv(model.classifier)
+            utils.set_bn_momentum(model.backbone, momentum=0.01)
+        else:
+            model = network.model.__dict__[model_name](channel=3 if opts.is_rgb else 1, 
+                                                        num_classes=opts.num_classes)
+    except:
+        raise Exception("<load model> Error occured while loading a model.")
+
+    if torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model)
+
+    if pretrain is not None and os.path.isfile(pretrain):
+        print("<load model> Model restored from %s" % pretrain)
+        checkpoint = torch.load(pretrain, map_location=torch.device('cpu'))
+        model.load_state_dict(checkpoint["model_state"])
+        del checkpoint  # free memory
+        torch.cuda.empty_cache()
+
+    return model
     
 def train(opts, devices, LOGDIR) -> dict:
 
@@ -163,7 +176,6 @@ def train(opts, devices, LOGDIR) -> dict:
     torch.manual_seed(opts.random_seed)
     np.random.seed(opts.random_seed)
     random.seed(opts.random_seed)
-
 
     ''' (1) Get datasets
     '''
@@ -177,34 +189,66 @@ def train(opts, devices, LOGDIR) -> dict:
 
     ''' (2) Set up criterion
     '''
-    if opts.loss_type == '':
-        criterion = ...
+    if opts.loss_type == 'kd_loss':
+        criterion = utils.KDLoss()
     else:
         raise NotImplementedError
 
-    ''' (3) Load model
+    ''' (3 -1) Load teacher & student models
     '''
-    try:
-        print("Model selection: {}".format(opts.model))
-        if opts.model.startswith("deeplab"):
-            model = network.model.__dict__[opts.model](channel=3 if opts.is_rgb else 1, 
-                                                        num_classes=opts.num_classes, output_stride=opts.output_stride)
-            if opts.separable_conv and 'plus' in opts.model:
-                network.convert_to_separable_conv(model.classifier)
-            utils.set_bn_momentum(model.backbone, momentum=0.01)
-        else:
-            model = network.model.__dict__[opts.model](channel=3 if opts.is_rgb else 1, 
-                                                        num_classes=opts.num_classes)                         
-    except:
-        raise Exception
+    t_model = load_model(opts=opts, model_name=opts.t_model, verbose=True,
+                            msg=" Teacher model selection: {}".format(opts.t_model)).to(devices)
+    s_model = load_model(opts=opts, model_name=opts.s_model, verbose=True,
+                            msg=" Student model selection: {}".format(opts.s_model))
 
     ''' (4) Set up optimizer
     '''
-    
+    if opts.s_model.startswith("deeplab"):
+        if opts.optim == "SGD":
+            optimizer = torch.optim.SGD(params=[
+            {'params': s_model.backbone.parameters(), 'lr': 0.1 * opts.lr},
+            {'params': s_model.classifier.parameters(), 'lr': opts.lr},
+            ], lr=opts.lr, momentum=opts.momentum, weight_decay=opts.weight_decay)
+        elif opts.optim == "RMSprop":
+            optimizer = torch.optim.RMSprop(params=[
+            {'params': s_model.backbone.parameters(), 'lr': 0.1 * opts.lr},
+            {'params': s_model.classifier.parameters(), 'lr': opts.lr},
+            ], lr=opts.lr, momentum=opts.momentum, weight_decay=opts.weight_decay)
+        else:
+            raise NotImplementedError
+    else:
+        optimizer = optim.RMSprop(s_model.parameters(), 
+                                    lr=opts.lr, 
+                                    weight_decay=opts.weight_decay,
+                                    momentum=opts.momentum)
+    if opts.lr_policy == 'poly':
+        scheduler = utils.PolyLR(optimizer, opts.total_itrs, power=0.9)
+    elif opts.lr_policy == 'step':
+        scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer, 
+                                                step_size=opts.step_size, gamma=0.1)
+    else:
+        raise NotImplementedError
 
-    ''' (5) Resume model & scheduler
+    ''' (5) Resume student model & scheduler
     '''
-    
+    if opts.ckpt is not None and os.path.isfile(opts.ckpt):
+        checkpoint = torch.load(opts.ckpt, map_location=torch.device('cpu'))
+        s_model.load_state_dict(checkpoint["model_state"])
+        s_model.to(devices)
+        if opts.continue_training:
+            optimizer.load_state_dict(checkpoint["optimizer_state"])
+            scheduler.load_state_dict(checkpoint["scheduler_state"])
+            resume_epoch = checkpoint["cur_itrs"]
+            print("Training state restored from %s" % opts.ckpt)
+        else:
+            resume_epoch = 0
+        print("Model restored from %s" % opts.ckpt)
+        del checkpoint  # free memory
+        torch.cuda.empty_cache()
+    else:
+        print("[!] Train from scratch...")
+        resume_epoch = 0
+        s_model.to(devices)
 
     ''' (6) Set up metrics
     '''
@@ -220,4 +264,85 @@ def train(opts, devices, LOGDIR) -> dict:
     B_epoch = 0
     B_val_score = None
 
-    
+    for epoch in range(resume_epoch, opts.total_itrs):
+
+        s_model.train()
+        running_loss = 0.0
+        metrics.reset()
+
+        for (images, lbl) in tqdm(train_loader, leave=True):
+
+            images = images.to(devices)
+            lbl = lbl.to(devices)
+            
+            optimizer.zero_grad()
+
+            s_outputs = s_model(images)
+            probs = nn.Softmax(dim=1)(s_outputs)
+            preds = torch.max(probs, 1)[1].detach().cpu().numpy()
+
+            t_outputs = t_model(images)
+
+            loss = criterion(s_outputs, t_outputs, lbl)
+
+            loss.backward()
+            optimizer.step()
+            metrics.update(lbl.detach().cpu().numpy(), preds)
+            running_loss += loss.item() * images.size(0)
+
+        scheduler.step()
+        score = metrics.get_results()
+
+        epoch_loss = running_loss / len(train_loader.dataset)
+        print("[{}] Epoch: {}/{} Loss: {:.8f}".format(
+            'Train', epoch+1, opts.total_itrs, epoch_loss))
+        print(" Overall Acc: {:.2f}, Mean Acc: {:.2f}, FreqW Acc: {:.2f}, Mean IoU: {:.2f}, Class IoU [0]: {:.2f} [1]: {:.2f}".format(
+            score['Overall Acc'], score['Mean Acc'], score['FreqW Acc'], score['Mean IoU'], score['Class IoU'][0], score['Class IoU'][1]))
+        print(" F1 [0]: {:.2f} [1]: {:.2f}".format(score['Class F1'][0], score['Class F1'][1]))
+        
+        if opts.save_log:
+            writer.add_scalar('Overall_Acc/train', score['Overall Acc'], epoch)
+            writer.add_scalar('Mean_Acc/train', score['Mean Acc'], epoch)
+            writer.add_scalar('FreqW_Acc/train', score['FreqW Acc'], epoch)
+            writer.add_scalar('Mean_IoU/train', score['Mean IoU'], epoch)
+            writer.add_scalar('Class_IoU_0/train', score['Class IoU'][0], epoch)
+            writer.add_scalar('Class_IoU_1/train', score['Class IoU'][1], epoch)
+            writer.add_scalar('Class_F1_0/train', score['Class F1'][0], epoch)
+            writer.add_scalar('Class_F1_1/train', score['Class F1'][1], epoch)
+            writer.add_scalar('epoch_loss/train', epoch_loss, epoch)
+
+        if (epoch+1) % opts.val_interval == 0:
+            s_model.eval()
+            metrics.reset()
+            val_score, val_loss = validate(opts, s_model, t_model, val_loader, 
+                                            devices, metrics, epoch, criterion)
+
+            print("[{}] Epoch: {}/{} Loss: {:.8f}".format('Validate', epoch+1, opts.total_itrs, val_loss))
+            print(" Overall Acc: {:.2f}, Mean Acc: {:.2f}, FreqW Acc: {:.2f}, Mean IoU: {:.2f}".format(
+                val_score['Overall Acc'], val_score['Mean Acc'], val_score['FreqW Acc'], val_score['Mean IoU']))
+            print(" Class IoU [0]: {:.2f} [1]: {:.2f}".format(val_score['Class IoU'][0], val_score['Class IoU'][1]))
+            print(" F1 [0]: {:.2f} [1]: {:.2f}".format(val_score['Class F1'][0], val_score['Class F1'][1]))
+            
+            if early_stopping(val_loss, s_model, optimizer, scheduler, epoch):
+                B_epoch = epoch
+            if dice_stopping(-1 * val_score['Class F1'][1], s_model, optimizer, scheduler, epoch):
+                B_val_score = val_score
+
+            if opts.save_log:
+                writer.add_scalar('Overall_Acc/val', val_score['Overall Acc'], epoch)
+                writer.add_scalar('Mean_Acc/val', val_score['Mean Acc'], epoch)
+                writer.add_scalar('FreqW_Acc/val', val_score['FreqW Acc'], epoch)
+                writer.add_scalar('Mean_IoU/val', val_score['Mean IoU'], epoch)
+                writer.add_scalar('Class_IoU_0/val', val_score['Class IoU'][0], epoch)
+                writer.add_scalar('Class_IoU_1/val', val_score['Class IoU'][1], epoch)
+                writer.add_scalar('Class_F1_0/val', val_score['Class F1'][0], epoch)
+                writer.add_scalar('Class_F1_1/val', val_score['Class F1'][1], epoch)
+                writer.add_scalar('epoch_loss/val', val_loss, epoch)
+        
+        if early_stopping.early_stop:
+            print("Early Stop !!!")
+            break
+
+        if opts.run_demo and epoch > 3:
+            print("Run demo !!!")
+            break

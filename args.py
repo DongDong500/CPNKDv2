@@ -18,8 +18,12 @@ def get_argparser():
                               not (name.startswith("__") or name.startswith('_')) and callable(
                               network.model.__dict__[name])
                              )
-    parser.add_argument("--model", type=str, default='unet_rgb', choices=available_models,
+    parser.add_argument("--t_model", type=str, default='unet_rgb', choices=available_models,
                         help='model name (default: Unet RGB)')
+    parser.add_argument("--s_model", type=str, default='unet_rgb', choices=available_models,
+                        help='model name (default: Unet RGB)')
+    parser.add_argument("--t_model_params", type=str, default='/',
+                        help="pretrained teacher network params (default: '/')")
     # DeeplabV3+ options
     parser.add_argument("--separable_conv", action='store_true', default=False,
                         help="apply separable conv to decoder and aspp (default: False)")

@@ -334,32 +334,32 @@ def train(opts, devices, LOGDIR) -> dict:
             writer.add_scalar('epoch_loss/train', epoch_loss, epoch)
         
         if (epoch+1) % opts.val_interval == 0:
-                model.eval()
-                metrics.reset()
-                val_score, val_loss = validate(opts, model, val_loader, 
-                                                devices, metrics, epoch, criterion)
+            model.eval()
+            metrics.reset()
+            val_score, val_loss = validate(opts, model, val_loader, 
+                                            devices, metrics, epoch, criterion)
 
-                print("[{}] Epoch: {}/{} Loss: {:.8f}".format('Validate', epoch+1, opts.total_itrs, val_loss))
-                print(" Overall Acc: {:.2f}, Mean Acc: {:.2f}, FreqW Acc: {:.2f}, Mean IoU: {:.2f}".format(
-                    val_score['Overall Acc'], val_score['Mean Acc'], val_score['FreqW Acc'], val_score['Mean IoU']))
-                print(" Class IoU [0]: {:.2f} [1]: {:.2f}".format(val_score['Class IoU'][0], val_score['Class IoU'][1]))
-                print(" F1 [0]: {:.2f} [1]: {:.2f}".format(val_score['Class F1'][0], val_score['Class F1'][1]))
-                
-                if early_stopping(val_loss, model, optimizer, scheduler, epoch):
-                    B_epoch = epoch
-                if dice_stopping(-1 * val_score['Class F1'][1], model, optimizer, scheduler, epoch):
-                    B_val_score = val_score
+            print("[{}] Epoch: {}/{} Loss: {:.8f}".format('Validate', epoch+1, opts.total_itrs, val_loss))
+            print(" Overall Acc: {:.2f}, Mean Acc: {:.2f}, FreqW Acc: {:.2f}, Mean IoU: {:.2f}".format(
+                val_score['Overall Acc'], val_score['Mean Acc'], val_score['FreqW Acc'], val_score['Mean IoU']))
+            print(" Class IoU [0]: {:.2f} [1]: {:.2f}".format(val_score['Class IoU'][0], val_score['Class IoU'][1]))
+            print(" F1 [0]: {:.2f} [1]: {:.2f}".format(val_score['Class F1'][0], val_score['Class F1'][1]))
+            
+            if early_stopping(val_loss, model, optimizer, scheduler, epoch):
+                B_epoch = epoch
+            if dice_stopping(-1 * val_score['Class F1'][1], model, optimizer, scheduler, epoch):
+                B_val_score = val_score
 
-                if opts.save_log:
-                    writer.add_scalar('Overall_Acc/val', val_score['Overall Acc'], epoch)
-                    writer.add_scalar('Mean_Acc/val', val_score['Mean Acc'], epoch)
-                    writer.add_scalar('FreqW_Acc/val', val_score['FreqW Acc'], epoch)
-                    writer.add_scalar('Mean_IoU/val', val_score['Mean IoU'], epoch)
-                    writer.add_scalar('Class_IoU_0/val', val_score['Class IoU'][0], epoch)
-                    writer.add_scalar('Class_IoU_1/val', val_score['Class IoU'][1], epoch)
-                    writer.add_scalar('Class_F1_0/val', val_score['Class F1'][0], epoch)
-                    writer.add_scalar('Class_F1_1/val', val_score['Class F1'][1], epoch)
-                    writer.add_scalar('epoch_loss/val', val_loss, epoch)
+            if opts.save_log:
+                writer.add_scalar('Overall_Acc/val', val_score['Overall Acc'], epoch)
+                writer.add_scalar('Mean_Acc/val', val_score['Mean Acc'], epoch)
+                writer.add_scalar('FreqW_Acc/val', val_score['FreqW Acc'], epoch)
+                writer.add_scalar('Mean_IoU/val', val_score['Mean IoU'], epoch)
+                writer.add_scalar('Class_IoU_0/val', val_score['Class IoU'][0], epoch)
+                writer.add_scalar('Class_IoU_1/val', val_score['Class IoU'][1], epoch)
+                writer.add_scalar('Class_F1_0/val', val_score['Class F1'][0], epoch)
+                writer.add_scalar('Class_F1_1/val', val_score['Class F1'][1], epoch)
+                writer.add_scalar('epoch_loss/val', val_loss, epoch)
         
         if early_stopping.early_stop:
             print("Early Stop !!!")
