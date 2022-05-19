@@ -101,7 +101,7 @@ if __name__ == '__main__':
     try:
         opts.Tlog_dir = opts.default_path
         opts.loss_type = 'kd_loss'
-        opts.s_model = 'deeplabv3plus_resnet50'
+        opts.s_model = 'unet_rgb'
         opts.t_model = 'deeplabv3plus_resnet50'
         opts.t_model_params = '/data1/sdi/CPNnetV1-result/deeplabv3plus_resnet50/May17_07-37-30_CPN_six/best_param/dicecheckpoint.pt'
         opts.output_stride = 32
