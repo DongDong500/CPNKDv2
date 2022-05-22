@@ -71,6 +71,11 @@ def get_argparser():
                         help='momentum (default: 0.9)')
     parser.add_argument("--batch_size", type=int, default=16,
                         help='batch size (default: 16)')
+
+    parser.add_argument("--alpha", type=float, default=0.5,
+                        help="alpha for KD loss (default: 0.5)")
+    parser.add_argument("--T", type=float, default=3,
+                        help="temperature in KD loss (default: 3)")
     # Early stop options
     parser.add_argument("--patience", type=int, default=100,
                         help="Number of epochs with no improvement after which training will be stopped (default: 100)")

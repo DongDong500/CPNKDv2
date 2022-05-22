@@ -67,7 +67,7 @@ class CPNaug(data.Dataset):
 
     def __init__(self, root, datatype='CPN_aug', image_set='train', transform=None, is_rgb=True):
         
-        is_aug = False
+        is_aug = True
 
         self.root = os.path.expanduser(root)
         self.datafolder = datatype
@@ -86,7 +86,8 @@ class CPNaug(data.Dataset):
                                ' You can use download=True to download it')
         
         if is_aug and image_set=='train':
-            raise NotImplementedError
+            splits_dir = os.path.join(cpn_root, 'splits')
+            split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
         else:
             splits_dir = os.path.join(cpn_root, 'splits')
             split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
@@ -101,14 +102,20 @@ class CPNaug(data.Dataset):
         with open(os.path.join(split_f), "r") as f:
             file_names = [x.strip() for x in f.readlines()]
 
-        self.images = [os.path.join(image_dir, x + ".bmp") for x in file_names]
-        self.rHE_images = [os.path.join(rHE_image_dir, x + ".bmp") for x in file_names]
-        self.HE_images = [os.path.join(HE_image_dir, x + ".bmp") for x in file_names]
-        self.masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
-        self.rHE_masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
-        self.HE_masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
-        self.images.extend(self.rHE_images)
-        self.masks.extend(self.rHE_masks)
+        if is_aug and image_set=='train':
+            self.images = [os.path.join(image_dir, x + ".bmp") for x in file_names]
+            self.rHE_images = [os.path.join(rHE_image_dir, x + ".bmp") for x in file_names]
+            self.HE_images = [os.path.join(HE_image_dir, x + ".bmp") for x in file_names]
+            self.masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
+            self.rHE_masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
+            self.HE_masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
+            self.images.extend(self.rHE_images)
+            self.images.extend(self.HE_images)
+            self.masks.extend(self.rHE_masks)
+            self.masks.extend(self.HE_masks)
+        else:
+            self.images = [os.path.join(image_dir, x + ".bmp") for x in file_names]
+            self.masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
 
         assert (len(self.images) == len(self.masks))
 
@@ -120,9 +127,9 @@ class CPNaug(data.Dataset):
             tuple: (image, target) where target is the image segmentation.
         """
         if not os.path.exists(self.images[index]):
-            raise FileNotFoundError
+            raise FileNotFoundError("Error: ", self.images[index])
         if not os.path.exists(self.masks[index]):
-            raise FileNotFoundError
+            raise FileNotFoundError("Error: ", self.masks[index])
         
         if self.is_rgb:
             img = Image.open(self.images[index]).convert('RGB')

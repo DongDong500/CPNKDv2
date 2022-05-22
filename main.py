@@ -103,9 +103,9 @@ if __name__ == '__main__':
     try:
         opts.Tlog_dir = opts.default_path
         opts.loss_type = 'kd_loss'
-        opts.s_model = 'unet_rgb'
+        opts.s_model = 'deeplabv3plus_resnet50'
         opts.t_model = 'deeplabv3plus_resnet50'
-        opts.t_model_params = '/data1/sdi/CPNnetV1-result/deeplabv3plus_resnet50/May17_07-37-30_CPN_six/best_param/dicecheckpoint.pt'
+        opts.t_model_params = '/mnt/server5/sdi/CPNnetV1-result/deeplabv3plus_resnet50/May17_07-37-30_CPN_six/best_param/dicecheckpoint.pt'
         opts.output_stride = 32
         opts.t_output_stride = 32
 
@@ -153,6 +153,7 @@ if __name__ == '__main__':
 
     except KeyboardInterrupt:
         print("Stop !!!")
+        os.remove(os.path.join(opts.default_path, 'log.json'))
     total_time = datetime.now() - total_time
 
     print('Time elapsed (h:m:s.ms) {}'.format(total_time))

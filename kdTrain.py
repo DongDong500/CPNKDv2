@@ -300,7 +300,7 @@ def train(opts, devices, LOGDIR) -> dict:
 
             weights = lbl.detach().cpu().numpy().sum() / (lbl.shape[0] * lbl.shape[1] * lbl.shape[2])
             weights = torch.tensor([weights, 1-weights], dtype=float32).to(devices)
-            criterion = utils.KDLoss(weight=weights)
+            criterion = utils.KDLoss(weight=weights, alpha=opts.alpha, temperature=opts.T)
             loss = criterion(s_outputs, t_outputs, lbl)
 
             loss.backward()
