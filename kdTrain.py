@@ -67,6 +67,13 @@ def get_dataset(opts):
         val_dst = dt.Median(root=opts.data_root, datatype=opts.dataset,
                         image_set='val', transform=val_transform,
                         is_rgb=opts.is_rgb)
+    elif opts.dataset == "CPN_aug":
+        train_dst = dt.CPNaug(root=opts.data_root, datatype=opts.dataset, 
+                            image_set='train', transform=train_transform,
+                            is_rgb=opts.is_rgb)
+        val_dst = dt.CPNaug(root=opts.data_root, datatype=opts.dataset,
+                        image_set='val', transform=val_transform,
+                        is_rgb=opts.is_rgb)
     else:
         train_dst = dt.CPN(root=opts.data_root, datatype=opts.dataset, 
                             image_set='train', transform=train_transform,
@@ -190,7 +197,7 @@ def train(opts, devices, LOGDIR) -> dict:
     ''' (2) Set up criterion
     '''
     if opts.loss_type == 'kd_loss':
-        criterion = utils.KDLoss()
+        criterion = None
     else:
         raise NotImplementedError
 
@@ -291,6 +298,9 @@ def train(opts, devices, LOGDIR) -> dict:
 
             t_outputs = t_model(images)
 
+            weights = lbl.detach().cpu().numpy().sum() / (lbl.shape[0] * lbl.shape[1] * lbl.shape[2])
+            weights = torch.tensor([weights, 1-weights], dtype=float32).to(devices)
+            criterion = utils.KDLoss(weight=weights)
             loss = criterion(s_outputs, t_outputs, lbl)
 
             loss.backward()

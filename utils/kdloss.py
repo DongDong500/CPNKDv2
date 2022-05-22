@@ -43,7 +43,7 @@ class KDLoss(_WeightedLoss):
 
     def __init__(self, weight: Optional[Tensor] = None, size_average=None, ignore_index: int = -100,
                  reduce=None, reduction: str = 'mean', label_smoothing: float = 0.0,
-                 alpha: float = 1.0, temperature: float = 1.0) -> None:
+                 alpha: float = 0.5, temperature: float = 1.0) -> None:
 
         super(KDLoss, self).__init__(weight, size_average, reduce, reduction)
         self.alpha = alpha
@@ -53,7 +53,7 @@ class KDLoss(_WeightedLoss):
     def forward(self, s_input: Tensor, t_input: Tensor, target: Tensor) -> Tensor:
         return self.KLDivLoss(F.log_softmax(s_input/self.T, dim=1),
                              F.softmax(t_input/self.T, dim=1)) * (self.alpha * self.T * self.T) + \
-                                    F.cross_entropy(s_input, target) * (1. - self.alpha)
+                                    F.cross_entropy(s_input, target, weight=self.weight) * (1. - self.alpha)
 
 
 if __name__ == "__main__":

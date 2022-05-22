@@ -56,18 +56,20 @@ if __name__ == '__main__':
     if socket.gethostname() == "server3":
         opts.cur_work_server = 3
         opts.login_dir = LOGIN[3]
-        opts.default_path = os.path.join(DEFAULT_DIR[3], os.path.dirname(__file__).split('/')[-1]+'-result')
+        opts.default_path = os.path.join(DEFAULT_DIR[3], 
+                                            os.path.dirname(os.path.abspath(__file__)).split('/')[-1]+'-result')
         opts.data_root = DATA_DIR[3]
     elif socket.gethostname() == "server4":
         opts.cur_work_server = 4
         opts.login_dir = LOGIN[4]
-        opts.default_path = os.path.join(DEFAULT_DIR[5], os.path.dirname(__file__).split('/')[-1]+'-result')
+        opts.default_path = os.path.join(DEFAULT_DIR[5], 
+                                            os.path.dirname(os.path.abspath(__file__)).split('/')[-1]+'-result')
         opts.data_root = DATA_DIR[4]
     elif socket.gethostname() == "server5":
         opts.cur_work_server = 5
         opts.login_dir = LOGIN[5]
-        opts.default_path = os.path.join(DEFAULT_DIR[5], os.path.dirname(
-                                                os.path.abspath(__file__)).split('/')[-1]+'-result')
+        opts.default_path = os.path.join(DEFAULT_DIR[5], 
+                                            os.path.dirname(os.path.abspath(__file__)).split('/')[-1]+'-result')
         opts.data_root = DATA_DIR[5]
     else:
         raise NotImplementedError
