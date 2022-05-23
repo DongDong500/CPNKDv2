@@ -63,7 +63,7 @@ def get_argparser():
                         help="optimizer (default: SGD)")
     parser.add_argument("--lr_policy", type=str, default='step',
                         help="learning rate scheduler policy")
-    parser.add_argument("--step_size", type=int, default=1000, 
+    parser.add_argument("--step_size", type=int, default=100, 
                         help="step size (default: 1000)")
     parser.add_argument("--weight_decay", type=float, default=5e-4,
                         help='weight decay (default: 5e-4)')

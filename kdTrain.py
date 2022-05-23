@@ -31,15 +31,16 @@ def get_dataset(opts):
     std = [0.229, 0.224, 0.225] if opts.is_rgb else [0.229]
 
     train_transform = et.ExtCompose([
-        et.ExtResize(size=opts.resize),
+        #et.ExtResize(size=opts.resize),
         et.ExtRandomCrop(size=opts.crop_size, pad_if_needed=True),
+        et.GaussianBlur(kernel_size=(5, 5)),
         et.ExtScale(scale=opts.scale_factor),
         et.ExtRandomVerticalFlip(),
         et.ExtToTensor(),
         et.ExtNormalize(mean=mean, std=std) 
         ])
     val_transform = et.ExtCompose([
-        et.ExtResize(size=opts.resize),
+        #et.ExtResize(size=opts.resize),
         et.ExtRandomCrop(size=opts.crop_size, pad_if_needed=True),
         et.ExtScale(scale=opts.scale_factor),
         et.ExtToTensor(),
@@ -225,6 +226,11 @@ def train(opts, devices, LOGDIR) -> dict:
             {'params': s_model.backbone.parameters(), 'lr': 0.1 * opts.lr},
             {'params': s_model.classifier.parameters(), 'lr': opts.lr},
             ], lr=opts.lr, momentum=opts.momentum, weight_decay=opts.weight_decay)
+        elif opts.optim == "Adam":
+            optimizer = torch.optim.Adam(params=[
+            {'params': s_model.backbone.parameters(), 'lr': 0.1 * opts.lr},
+            {'params': s_model.classifier.parameters(), 'lr': opts.lr},
+            ], lr=opts.lr, betas=(0.9, 0.999), eps=1e-8)
         else:
             raise NotImplementedError
     else:

@@ -145,7 +145,7 @@ if __name__ == '__main__':
             utils.save_dict_to_json(d=params, json_path=os.path.join(logdir, 'summary.json'))
 
         mlog['time elapsed'] = 'Time elapsed (h:m:s.ms) {}'.format(time_elapsed)
-        #smail(subject="Short report-{}".format("CPN Knowledge distillation"), body=mlog, login_dir=opts.login_dir)
+        smail(subject="Short report-{}".format("CPN Knowledge distillation"), body=mlog, login_dir=opts.login_dir)
         mlog = {}
 
         os.remove(os.path.join(opts.default_path, 'mlog.json'))

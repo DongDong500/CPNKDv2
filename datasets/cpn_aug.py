@@ -163,6 +163,7 @@ if __name__ == "__main__":
 
     transform = et.ExtCompose([
             et.ExtRandomCrop(size=(512, 512), pad_if_needed=True),
+            et.GaussianBlur(kernel_size=(5, 5)),
             et.ExtScale(scale=0.5),
             et.ExtToTensor(),
             et.ExtNormalize(mean=0.485, std=0.229)

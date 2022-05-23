@@ -9,6 +9,7 @@ import numbers
 import numpy as np
 from PIL import Image
 
+from collections.abc import Sequence
 
 #
 #  Extended Transforms for Semantic Segmentation
@@ -576,3 +577,111 @@ class Compose(object):
             format_string += '    {0}'.format(t)
         format_string += '\n)'
         return format_string
+
+
+class GaussianPerturb(object):
+    """Gaussian perturbation on a tensor image with mean and standard deviation.
+    Given mean: ``(M1,...,Mn)`` and std: ``(S1,..,Sn)`` for ``n`` channels, this transform
+    will normalize each channel of the input ``torch.*Tensor`` i.e.
+    ``input[channel] = (input[channel] - mean[channel]) / std[channel]``
+    Args:
+        mean (sequence): Sequence of means for each channel.
+        std (sequence): Sequence of standard deviations for each channel.
+    """
+
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, tensor, lbl):
+        """
+        Args:
+            tensor (Tensor): Tensor image of size (C, H, W) to be perturbed.
+            tensor (Tensor): Tensor of label. A dummy input for ExtCompose
+        Returns:
+            Tensor: Normalized Tensor image.
+            Tensor: Unchanged Tensor label
+        """
+        tensor = ...
+
+        return tensor, lbl
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
+
+
+class GaussianBlur(object):
+    """Blurs image with randomly chosen Gaussian blur.
+    If the image is torch Tensor, it is expected
+    to have [..., C, H, W] shape, where ... means an arbitrary number of leading dimensions.
+
+    Args:
+        kernel_size (int or sequence): Size of the Gaussian kernel.
+        sigma (float or tuple of float (min, max)): Standard deviation to be used for
+            creating kernel to perform blurring. If float, sigma is fixed. If it is tuple
+            of float (min, max), sigma is chosen uniformly at random to lie in the
+            given range.
+
+    Returns:
+        PIL Image or Tensor: Gaussian blurred version of the input image.
+
+    """
+
+    def __init__(self, kernel_size, sigma=(0.1, 2.0)):
+        self.kernel_size = _setup_size(kernel_size, "Kernel size should be a tuple/list of two integers")
+        for ks in self.kernel_size:
+            if ks <= 0 or ks % 2 == 0:
+                raise ValueError("Kernel size value should be an odd and positive number.")
+
+        if isinstance(sigma, numbers.Number):
+            if sigma <= 0:
+                raise ValueError("If sigma is a single number, it must be positive.")
+            sigma = (sigma, sigma)
+        elif isinstance(sigma, Sequence) and len(sigma) == 2:
+            if not 0.0 < sigma[0] <= sigma[1]:
+                raise ValueError("sigma values should be positive and of the form (min, max).")
+        else:
+            raise ValueError("sigma should be a single number or a list/tuple with length 2.")
+
+        self.sigma = sigma
+
+    @staticmethod
+    def get_params(sigma_min: float, sigma_max: float) -> float:
+        """Choose sigma for random gaussian blurring.
+
+        Args:
+            sigma_min (float): Minimum standard deviation that can be chosen for blurring kernel.
+            sigma_max (float): Maximum standard deviation that can be chosen for blurring kernel.
+
+        Returns:
+            float: Standard deviation to be passed to calculate kernel for gaussian blurring.
+        """
+        return torch.empty(1).uniform_(sigma_min, sigma_max).item()
+
+    def __call__(self, img, lbl):
+        """
+        Args:
+            img (PIL Image or Tensor): image to be blurred.
+
+        Returns:
+            PIL Image or Tensor: Gaussian blurred image
+        """
+        sigma = self.get_params(self.sigma[0], self.sigma[1])
+        return F.gaussian_blur(img, self.kernel_size, [sigma, sigma]), lbl
+
+    def __repr__(self) -> str:
+        s = f"{self.__class__.__name__}(kernel_size={self.kernel_size}, sigma={self.sigma})"
+        return s
+
+
+def _setup_size(size, error_msg):
+    if isinstance(size, numbers.Number):
+        return int(size), int(size)
+
+    if isinstance(size, Sequence) and len(size) == 1:
+        return size[0], size[0]
+
+    if len(size) != 2:
+        raise ValueError(error_msg)
+
+    return size
