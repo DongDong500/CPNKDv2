@@ -589,7 +589,7 @@ class GaussianPerturb(object):
         std (sequence): Sequence of standard deviations for each channel.
     """
 
-    def __init__(self, mean, std):
+    def __init__(self, mean=0, std=0.1):
         self.mean = mean
         self.std = std
 
@@ -602,9 +602,9 @@ class GaussianPerturb(object):
             Tensor: Normalized Tensor image.
             Tensor: Unchanged Tensor label
         """
-        tensor = ...
-
-        return tensor, lbl
+        gp = np.random.normal(self.mean, self.std, np.shape(tensor.numpy()))
+        
+        return tensor + torch.from_numpy(gp), lbl
 
     def __repr__(self):
         return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)

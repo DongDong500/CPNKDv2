@@ -33,15 +33,16 @@ def get_dataset(opts):
     train_transform = et.ExtCompose([
         #et.ExtResize(size=opts.resize),
         et.ExtRandomCrop(size=opts.crop_size, pad_if_needed=True),
-        et.GaussianBlur(kernel_size=(5, 5)),
+        #et.GaussianBlur(kernel_size=(5, 5)),
         et.ExtScale(scale=opts.scale_factor),
         et.ExtRandomVerticalFlip(),
         et.ExtToTensor(),
-        et.ExtNormalize(mean=mean, std=std) 
+        et.ExtNormalize(mean=mean, std=std),
+        et.GaussianPerturb()
         ])
     val_transform = et.ExtCompose([
-        #et.ExtResize(size=opts.resize),
-        et.ExtRandomCrop(size=opts.crop_size, pad_if_needed=True),
+        et.ExtResize(size=opts.resize),
+        et.ExtRandomCrop(size=opts.val_crop_size, pad_if_needed=True),
         et.ExtScale(scale=opts.scale_factor),
         et.ExtToTensor(),
         et.ExtNormalize(mean=mean, std=std)
