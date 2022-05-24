@@ -602,9 +602,10 @@ class GaussianPerturb(object):
             Tensor: Normalized Tensor image.
             Tensor: Unchanged Tensor label
         """
-        gp = np.random.normal(self.mean, self.std, np.shape(tensor.numpy()))
-        
-        return tensor + torch.from_numpy(gp), lbl
+        gp = np.random.normal(self.mean, self.std, np.shape(tensor.numpy()) )
+        gp = np.array(gp)
+
+        return tensor + torch.from_numpy(gp).type(torch.float32), lbl
 
     def __repr__(self):
         return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
