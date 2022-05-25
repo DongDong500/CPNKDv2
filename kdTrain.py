@@ -31,14 +31,14 @@ def get_dataset(opts):
     std = [0.229, 0.224, 0.225] if opts.is_rgb else [0.229]
 
     train_transform = et.ExtCompose([
-        #et.ExtResize(size=opts.resize),
+        et.ExtResize(size=opts.resize),
         et.ExtRandomCrop(size=opts.crop_size, pad_if_needed=True),
         #et.GaussianBlur(kernel_size=(5, 5)),
         et.ExtScale(scale=opts.scale_factor),
         et.ExtRandomVerticalFlip(),
         et.ExtToTensor(),
-        et.ExtNormalize(mean=mean, std=std),
         et.GaussianPerturb()
+        et.ExtNormalize(mean=mean, std=std),
         ])
     val_transform = et.ExtCompose([
         et.ExtResize(size=opts.resize),

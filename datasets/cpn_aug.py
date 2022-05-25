@@ -67,7 +67,7 @@ class CPNaug(data.Dataset):
 
     def __init__(self, root, datatype='CPN_aug', image_set='train', transform=None, is_rgb=True):
         
-        is_aug = True
+        is_aug = False
 
         self.root = os.path.expanduser(root)
         self.datafolder = datatype
