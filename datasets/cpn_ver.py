@@ -41,7 +41,7 @@ def cpn_cmap(N=256, normalized=False):
 
 CpnDataDir = 'CPN_all'
 
-class CPNaug(data.Dataset):
+class CPNver(data.Dataset):
     """
     Args:6
         root (string): Root directory of the VOC Dataset.
@@ -65,7 +65,7 @@ class CPNaug(data.Dataset):
     
     cmap = cpn_cmap()
 
-    def __init__(self, root, datatype='CPN_aug', image_set='train', transform=None, is_rgb=True):
+    def __init__(self, root, datatype='CPN_all_ver01', image_set='train', transform=None, is_rgb=True):
         
         is_aug = True
 
@@ -169,11 +169,11 @@ if __name__ == "__main__":
             et.ExtNormalize(mean=0.485, std=0.229)
             ])
     
-    dlist = ['CPN_aug']
+    dlist = ['CPN_all_ver01']
 
     for j in dlist:
             
-        dst = CPNaug(root='/mnt/server5/sdi/datasets', datatype=j, image_set='val',
+        dst = CPNver(root='/mnt/server5/sdi/datasets', datatype=j, image_set='val',
                                     transform=transform, is_rgb=True)
         train_loader = DataLoader(dst, batch_size=1,
                                     shuffle=True, num_workers=2, drop_last=True)
