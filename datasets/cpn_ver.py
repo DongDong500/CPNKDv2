@@ -133,10 +133,10 @@ class CPNver(data.Dataset):
         
         if self.is_rgb:
             img = Image.open(self.images[index]).convert('RGB')
-            target = Image.open(self.masks[index]).convert('L')         
+            target = Image.open(self.masks[index]).convert('L')
         else:
             img = Image.open(self.images[index]).convert('L')
-            target = Image.open(self.masks[index]).convert('L')            
+            target = Image.open(self.masks[index]).convert('L')
 
         if self.transform is not None:
             img, target = self.transform(img, target)

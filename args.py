@@ -77,6 +77,8 @@ def get_argparser():
                         help="alpha for KD loss (default: 0.5)")
     parser.add_argument("--T", type=float, default=3,
                         help="temperature in KD loss (default: 3)")
+    parser.add_argument("--std", type=float, default=0.01,
+                        help="sigma in gaussian perturbation (default: 0.01)")
     # Early stop options
     parser.add_argument("--patience", type=int, default=100,
                         help="Number of epochs with no improvement after which training will be stopped (default: 100)")
