@@ -4,3 +4,4 @@ from .cpn_six import CPN
 from .median import Median
 from .cpn_aug import CPNaug
 from .cpn_ver import CPNver
+from .cpn_cm import CPNcm

@@ -37,7 +37,7 @@ def get_dataset(opts):
         et.ExtScale(scale=opts.scale_factor),
         et.ExtRandomVerticalFlip(),
         et.ExtToTensor(),
-        et.GaussianPerturb(),
+        et.GaussianPerturb(std=opts.std),
         et.ExtNormalize(mean=mean, std=std),
         ])
     val_transform = et.ExtCompose([
@@ -76,11 +76,11 @@ def get_dataset(opts):
         val_dst = dt.CPNaug(root=opts.data_root, datatype=opts.dataset,
                         image_set='val', transform=val_transform,
                         is_rgb=opts.is_rgb)
-    elif opts.dataset == "CPN_all_ver01":
-        train_dst = dt.CPNver(root=opts.data_root, datatype=opts.dataset, 
+    elif opts.dataset == "CPN_cm":
+        train_dst = dt.CPNcm(root=opts.data_root, datatype=opts.dataset, 
                             image_set='train', transform=train_transform,
                             is_rgb=opts.is_rgb)
-        val_dst = dt.CPNver(root=opts.data_root, datatype=opts.dataset,
+        val_dst = dt.CPNcm(root=opts.data_root, datatype=opts.dataset,
                         image_set='val', transform=val_transform,
                         is_rgb=opts.is_rgb)
     else:
