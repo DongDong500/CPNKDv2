@@ -48,48 +48,10 @@ def get_dataset(opts):
         et.ExtNormalize(mean=mean, std=std)
         ])
 
-    if opts.dataset == "CPN":
-        train_dst = dt.CPNSegmentation(root=opts.data_root, datatype=opts.dataset,
-                                        image_set='train', transform=train_transform, 
-                                        is_rgb=opts.is_rgb)
-        val_dst = dt.CPNSegmentation(root=opts.data_root, datatype=opts.dataset,
-                                     image_set='val', transform=val_transform, 
-                                     is_rgb=opts.is_rgb)
-    elif opts.dataset == "CPN_all":
-        train_dst = dt.CPNALLSegmentation(root=opts.data_root, datatype=opts.dataset,
-                                         image_set='train', transform=train_transform, 
-                                         is_rgb=opts.is_rgb)
-        val_dst = dt.CPNALLSegmentation(root=opts.data_root, datatype=opts.dataset,
-                                        image_set='val', transform=val_transform, 
-                                        is_rgb=opts.is_rgb)
-    elif opts.dataset == "Median":
-        train_dst = dt.Median(root=opts.data_root, datatype=opts.dataset, 
-                            image_set='train', transform=train_transform,
-                            is_rgb=opts.is_rgb)
-        val_dst = dt.Median(root=opts.data_root, datatype=opts.dataset,
-                        image_set='val', transform=val_transform,
-                        is_rgb=opts.is_rgb)
-    elif opts.dataset == "CPN_aug":
-        train_dst = dt.CPNaug(root=opts.data_root, datatype=opts.dataset, 
-                            image_set='train', transform=train_transform,
-                            is_rgb=opts.is_rgb)
-        val_dst = dt.CPNaug(root=opts.data_root, datatype=opts.dataset,
-                        image_set='val', transform=val_transform,
-                        is_rgb=opts.is_rgb)
-    elif opts.dataset == "CPN_cm":
-        train_dst = dt.CPNcm(root=opts.data_root, datatype=opts.dataset, 
-                            image_set='train', transform=train_transform,
-                            is_rgb=opts.is_rgb)
-        val_dst = dt.CPNcm(root=opts.data_root, datatype=opts.dataset,
-                        image_set='val', transform=val_transform,
-                        is_rgb=opts.is_rgb)
-    else:
-        train_dst = dt.CPN(root=opts.data_root, datatype=opts.dataset, 
-                            image_set='train', transform=train_transform,
-                            is_rgb=opts.is_rgb)
-        val_dst = dt.CPN(root=opts.data_root, datatype=opts.dataset,
-                        image_set='val', transform=val_transform,
-                        is_rgb=opts.is_rgb)
+    train_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, datatype=opts.dataset, is_rgb=opts.is_rgb,
+                                                    image_set='train', transform=train_transform)
+    val_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, datatype=opts.dataset, is_rgb=opts.is_rgb,
+                                                image_set='val', transform=val_transform)
     
     return train_dst, val_dst
 

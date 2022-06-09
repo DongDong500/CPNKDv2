@@ -1,5 +1,6 @@
 import argparse
 import network
+import datasets
 
 def get_argparser():
     parser = argparse.ArgumentParser()
@@ -38,7 +39,8 @@ def get_argparser():
                         help="number of workers (default: 4)")
     parser.add_argument("--data_root", type=str, default="/data1/sdi/datasets/",
                         help="path to Dataset")
-    parser.add_argument("--dataset", type=str, default="CPN_six",
+    available_datasets = sorted( name for name in datasets.getdata.__dict__ if  callable(datasets.getdata.__dict__[name]) )                    
+    parser.add_argument("--dataset", type=str, default="CPN_six", choices=available_datasets,
                         help='Name of dataset (default: CPN_six)')
     parser.add_argument("--num_classes", type=int, default=2,
                         help="number of classes (default: 2)")
