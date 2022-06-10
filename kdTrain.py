@@ -52,14 +52,19 @@ def get_dataset(opts):
                                                     image_set='train', transform=train_transform)
     val_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, datatype=opts.dataset, is_rgb=opts.is_rgb,
                                                 image_set='val', transform=val_transform)
-    
-    return train_dst, val_dst
+    test_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, datatype=opts.dataset, is_rgb=opts.is_rgb,
+                                                image_set='test', transform=val_transform)
 
-def build_log(opts, LOGDIR) -> SummaryWriter:
+    return train_dst, val_dst, test_dst
+
+
+def build_log(opts, LOGDIR):
+
     # Tensorboard option
     if opts.save_log:
         logdir = os.path.join(LOGDIR, 'log')
-        writer = SummaryWriter(log_dir=logdir)
+        if not os.path.exists(logdir):
+            os.makedirs(logdir, exist_ok=True)
 
     # Validate option
     if opts.val_results:
@@ -86,7 +91,8 @@ def build_log(opts, LOGDIR) -> SummaryWriter:
         jsummary[key] = val
     utils.save_dict_to_json(jsummary, os.path.join(LOGDIR, 'summary.json'))
 
-    return writer
+    print("Done: build log directory")
+
 
 def validate(opts, s_model, t_model, loader, device, metrics, epoch, criterion):
 
@@ -149,21 +155,24 @@ def load_model(opts: ArgumentParser = None, model_name: str = '', msg: str = '',
     
 def train(opts, devices, LOGDIR) -> dict:
 
-    writer = build_log(opts, LOGDIR)
-
+    build_log(opts, LOGDIR)
+    
+    writer = SummaryWriter(log_dir=logdir)
     torch.manual_seed(opts.random_seed)
     np.random.seed(opts.random_seed)
     random.seed(opts.random_seed)
 
     ''' (1) Get datasets
     '''
-    train_dst, val_dst = get_dataset(opts)
+    train_dst, val_dst, test_dst = get_dataset(opts)
     train_loader = DataLoader(train_dst, batch_size=opts.batch_size,
                                 shuffle=True, num_workers=opts.num_workers, drop_last=True)
     val_loader = DataLoader(val_dst, batch_size=opts.val_batch_size, 
                                 shuffle=True, num_workers=opts.num_workers, drop_last=True)
-    print("Dataset: %s, Train set: %d, Val set: %d" % 
-                    (opts.dataset, len(train_dst), len(val_dst)))
+    test_loader = DataLoader(test_dst, batch_size=opts.test_batch_size, 
+                                shuffle=True, num_workers=opts.num_workers, drop_last=True)
+    print("Dataset: %s, Train set: %d, Val set: %d Test set: %d" % 
+                        (opts.dataset, len(train_dst), len(val_dst)))
 
     ''' (2) Set up criterion
     '''

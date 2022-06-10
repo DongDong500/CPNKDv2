@@ -117,10 +117,10 @@ if __name__ == '__main__':
             resume = False
         elif not resume and not opts.run_demo:
             opts.current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-            logdir = os.path.join(opts.Tlog_dir, opts.s_model, opts.current_time + '_' + opts.dataset)
+            logdir = os.path.join(opts.Tlog_dir, opts.current_time + '_' + opts.dataset)
         else:
             opts.current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-            logdir = os.path.join(opts.Tlog_dir, opts.s_model, opts.current_time + '_' + opts.dataset + '_demo')
+            logdir = os.path.join(opts.Tlog_dir, opts.current_time + '_' + '_demo')
 
         # leave log
         with open(os.path.join(opts.default_path, 'log.json'), "w") as f:

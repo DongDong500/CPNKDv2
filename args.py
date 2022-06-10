@@ -74,6 +74,8 @@ def get_argparser():
                         help='momentum (default: 0.9)')
     parser.add_argument("--batch_size", type=int, default=16,
                         help='batch size (default: 16)')
+    parser.add_argument("--exp_itr", type=int, default=8,
+                        help='repeat N times identical experiments (default: 8)')
 
     parser.add_argument("--alpha", type=float, default=0.5,
                         help="alpha for KD loss (default: 0.5)")
@@ -91,6 +93,11 @@ def get_argparser():
                         help="epoch interval for eval (default: 1)")
     parser.add_argument("--val_batch_size", type=int, default=4,
                         help='batch size for validate (default: 4)')
+    # Test options
+    parser.add_argument("--test_interval", type=int, default=1,
+                        help="epoch interval for test (default: 1)")
+    parser.add_argument("--test_batch_size", type=int, default=4,
+                        help='batch size for test (default: 4)')
     # Outcome options
     parser.add_argument("--save_model", action='store_true', default=False,
                         help="save best model param to \"./best_param\" (default: False)")
