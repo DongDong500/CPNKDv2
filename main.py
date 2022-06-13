@@ -105,7 +105,7 @@ if __name__ == '__main__':
         opts.loss_type = 'kd_loss'
         opts.s_model = 'deeplabv3plus_resnet50'
         opts.t_model = 'deeplabv3plus_resnet50'
-        opts.t_model_params = '/mnt/server5/sdi/CPNnetV1-result/deeplabv3plus_resnet50/May17_07-37-30_CPN_six/best_param/dicecheckpoint.pt'
+        opts.t_model_params = '/data1/sdi/CPNnetV1-result/deeplabv3plus_resnet50/May17_07-37-30_CPN_six/best_param/dicecheckpoint.pt'
         opts.output_stride = 32
         opts.t_output_stride = 32
 
@@ -120,7 +120,7 @@ if __name__ == '__main__':
             logdir = os.path.join(opts.Tlog_dir, opts.current_time + '_' + opts.dataset)
         else:
             opts.current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-            logdir = os.path.join(opts.Tlog_dir, opts.current_time + '_' + '_demo')
+            logdir = os.path.join(opts.Tlog_dir, opts.current_time + '_demo')
 
         # leave log
         with open(os.path.join(opts.default_path, 'log.json'), "w") as f:

@@ -18,27 +18,8 @@ else:
     from .splits import split_dataset
 '''
 
-def voc_cmap(N=256, normalized=False):
-    def bitget(byteval, idx):
-        return ((byteval & (1 << idx)) != 0)
 
-    dtype = 'float32' if normalized else 'uint8'
-    cmap = np.zeros((N, 3), dtype=dtype)
-    for i in range(N):
-        r = g = b = 0
-        c = i
-        for j in range(8):
-            r = r | (bitget(c, 0) << 7-j)
-            g = g | (bitget(c, 1) << 7-j)
-            b = b | (bitget(c, 2) << 7-j)
-            c = c >> 3
-
-        cmap[i] = np.array([r, g, b])
-
-    cmap = cmap/255 if normalized else cmap
-    return cmap
-
-class CPNALLSegmentation(data.Dataset):
+class CPNall(data.Dataset):
     """
     Args:6
         root (string): Root directory of the VOC Dataset.
@@ -48,8 +29,8 @@ class CPNALLSegmentation(data.Dataset):
             and returns a transformed version. E.g, ``transforms.RandomCrop``
     """
 
-    cmap = voc_cmap()
-    def __init__(self, root, datatype='CPN_all', image_set='train', transform=None, is_rgb=True):
+    def __init__(self, root, datatype = 'CPN_all', image_set = 'train', 
+                    transform = None, is_rgb = True, kfold = 0, kftimes = 0):
         
         is_aug = False
 
@@ -141,7 +122,7 @@ if __name__ == "__main__":
 
     for j in dlist:
             
-        dst = CPNALLSegmentation(root='/data1/sdi/datasets', datatype=j, image_set='val',
+        dst = CPNall(root='/data1/sdi/datasets', datatype=j, image_set='val',
                                     transform=transform, is_rgb=True)
         train_loader = DataLoader(dst, batch_size=5,
                                     shuffle=True, num_workers=2, drop_last=True)

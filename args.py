@@ -46,6 +46,8 @@ def get_argparser():
                         help="number of classes (default: 2)")
     parser.add_argument("--is_rgb", action='store_false', default=True,
                         help="choose True: RGB, False: grey (default: True)")
+    parser.add_argument("--k_fold", type=int, default=5,
+                        help="K fold cross validation (default: 5)")
     # Augmentation options
     parser.add_argument("--resize", default=(496, 468))
     parser.add_argument("--crop_size", default=(512, 448))
