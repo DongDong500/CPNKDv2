@@ -31,14 +31,14 @@ class CPNall(data.Dataset):
 
     def __init__(self, root, datatype = 'CPN_all', image_set = 'train', 
                     transform = None, is_rgb = True, kfold = 0, kftimes = 0):
-        
-        is_aug = False
 
-        self.root = os.path.expanduser(root)
+        self.root = root
         self.datafolder = datatype
         self.image_set = image_set
         self.transform = transform
         self.is_rgb = is_rgb
+        self.kfold = kfold
+        self.kftimes = kftimes
 
         cpn_root = os.path.join(self.root, datatype)
         image_dir = os.path.join(cpn_root, 'Images')
@@ -48,14 +48,14 @@ class CPNall(data.Dataset):
             raise RuntimeError('Dataset not found or corrupted.' +
                                ' You can use download=True to download it')
         
-        if is_aug and image_set=='train':
-            raise NotImplementedError
-        else:
+        if kfold == 0:
             splits_dir = os.path.join(cpn_root, 'splits')
             split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
-
-        if not os.path.exists(splits_dir):
-            split_dataset(splits_dir=splits_dir, data_dir=image_dir)
+        elif kfold > 1 and kfold < 11:
+            splits_dir = os.path.join(cpn_root, 'splits', 'cv' + str(kfold), str(kftimes))
+            split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
+        else:
+            raise RuntimeError('Error: K-fold cv')
 
         if not os.path.exists(split_f):
             raise ValueError('Wrong image_set entered!' 
@@ -97,11 +97,6 @@ class CPNall(data.Dataset):
     def __len__(self):
         return len(self.images)
 
-    @classmethod
-    def decode_target(cls, mask):
-        """decode semantic mask to RGB image"""
-        return cls.cmap[mask]
-
 if __name__ == "__main__":
 
     print(os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ))
@@ -119,14 +114,14 @@ if __name__ == "__main__":
             ])
     
     dlist = ['CPN_FH', 'CPN_FN', 'CPN_FN+1', 'CPN_FN+2', 'CPN_FN+3', 'CPN_FN+4']
-
+    dlist = ['CPN_all']
     for j in dlist:
             
         dst = CPNall(root='/data1/sdi/datasets', datatype=j, image_set='val',
-                                    transform=transform, is_rgb=True)
+                                    transform=transform, is_rgb=True, kfold=5, kftimes=3)
         train_loader = DataLoader(dst, batch_size=5,
                                     shuffle=True, num_workers=2, drop_last=True)
-        
+        print('set: %d' % (len(dst)))
         for i, (ims, lbls) in tqdm(enumerate(train_loader)):
             print(ims.shape)
             print(lbls.shape)

@@ -17,6 +17,8 @@ def cpn_all(root: str = '/', datatype:str = 'CPN_all', image_set:str = 'train',
         image_set (str): train/val or test (default: train).
         transform (ExtCompose): composition of transform class.
         is_rgb (bool): 3 input channel for True else False.
+        kfold (int): k-fold cross validation
+        kftimes (int): current iteration of cv
     """
     return CPNall(root, datatype, image_set, transform, is_rgb, kfold, kftimes)
 
