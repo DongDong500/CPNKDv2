@@ -26,7 +26,7 @@ from utils import ext_transforms as et
 from utils import histeq as hq
 
 
-def get_dataset(opts, Kfold):
+def get_dataset(opts, kftimes):
 
     mean = [0.485, 0.456, 0.406] if opts.is_rgb else [0.485]
     std = [0.229, 0.224, 0.225] if opts.is_rgb else [0.229]
@@ -49,10 +49,10 @@ def get_dataset(opts, Kfold):
         et.ExtNormalize(mean=mean, std=std)
         ])
 
-    train_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, datatype=opts.dataset, is_rgb=opts.is_rgb,
-                                                    image_set='train', transform=train_transform, kfold=opts.k_fold, kftimes=Kfold)
-    val_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, datatype=opts.dataset, is_rgb=opts.is_rgb,
-                                                image_set='val', transform=val_transform, kfold=opts.k_fold, kftimes=Kfold)
+    train_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, is_rgb=opts.is_rgb,
+                                                    image_set='train', transform=train_transform, kfold=opts.k_fold, kftimes=kftimes)
+    val_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, is_rgb=opts.is_rgb,
+                                                image_set='val', transform=val_transform, kfold=opts.k_fold, kftimes=kftimes)
     
     return train_dst, val_dst
 
@@ -96,7 +96,6 @@ def build_log(opts, LOGDIR):
 def validate(opts, s_model, t_model, loader, device, metrics, epoch, criterion):
 
     metrics.reset()
-    ret_samples = []
 
     running_loss = 0.0
     with torch.no_grad():
@@ -159,11 +158,12 @@ def train(opts, devices, LOGDIR) -> dict:
     test_result = {}
 
     for exp_itr in range(0, opts.exp_itr):
-    
-        for Kfold in range(0, opts.k_fold):
+
+        for kftimes in range(0, opts.k_fold):
         
-            runs = glob.glob(os.path.join(LOGDIR, 'log', 'run_??'))
-            run_id = int(runs[-1].split('_')) + 1 if runs else 0
+            #runs = sorted(glob.glob(os.path.join(LOGDIR, 'log', 'run_??')))
+            #run_id = int(runs[-1].split('_')[-1]) + 1 if runs else 0
+            run_id = exp_itr*opts.k_fold + kftimes
             logdir = os.path.join(LOGDIR, 'log', 'run_' + str(run_id).zfill(2))
             writer = SummaryWriter(log_dir=logdir)
 
@@ -173,12 +173,12 @@ def train(opts, devices, LOGDIR) -> dict:
 
             ''' (1) Get datasets
             '''
-            train_dst, val_dst, test_dst = get_dataset(opts, Kfold)
+            train_dst, val_dst = get_dataset(opts, kftimes)
             train_loader = DataLoader(train_dst, batch_size=opts.batch_size,
                                         shuffle=True, num_workers=opts.num_workers, drop_last=True)
             val_loader = DataLoader(val_dst, batch_size=opts.val_batch_size, 
                                         shuffle=True, num_workers=opts.num_workers, drop_last=True)
-            print("Dataset: %s, Train set: %d, Val set: %d Test set: %d" % 
+            print("Dataset: %s, Train set: %d, Val set: %d" % 
                                 (opts.dataset, len(train_dst), len(val_dst)))
 
             ''' (2) Set up criterion
@@ -385,10 +385,23 @@ def train(opts, devices, LOGDIR) -> dict:
                         os.remove(os.path.join(opts.save_ckpt, 'dicecheckpoint.pt'))
                     os.rmdir(os.path.join(opts.save_ckpt))
             
-            test_result[exp_itr] = {
+            test_result[exp_itr*opts.exp_itr + kftimes] = {
                                     'Model' : opts.s_model, 'Dataset' : opts.dataset,
                                     'Policy' : opts.lr_policy, 'OS' : str(opts.output_stride), 'Epoch' : str(B_epoch),
-                                    'F1 [0]' : "{:.2f}".format(B_val_score['Class F1'][0]), 'F1 [1]' : "{:.2f}".format(B_val_score['Class F1'][1])
+                                    'F1 [0]' : B_val_score['Class F1'][0], 'F1 [1]' : B_val_score['Class F1'][1]
                                     }
+    f10 = 0
+    f11 = 0
+    N = 0
+    for k in test_result.keys():
+        N += 1
+        f10 += test_result[k]['F1 [0]']
+        f11 += test_result[k]['F1 [1]']
+    f10 /= N
+    f11 /= N
 
-    return test_result
+    return {
+        'Model' : opts.s_model, 'Dataset' : opts.dataset,
+        'Policy' : opts.lr_policy, 'OS' : str(opts.output_stride),
+        'F1 [0]' : "{:.6f}".format(f10), 'F1 [1]' : "{:.6f}".format(f11)
+    }

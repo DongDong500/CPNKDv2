@@ -47,7 +47,7 @@ def get_argparser():
     parser.add_argument("--is_rgb", action='store_false', default=True,
                         help="choose True: RGB, False: grey (default: True)")
     parser.add_argument("--k_fold", type=int, default=5,
-                        help="K fold cross validation (default: 5)")
+                        help="K-fold cross validation (default: 5)")
     # Augmentation options
     parser.add_argument("--resize", default=(496, 468))
     parser.add_argument("--crop_size", default=(512, 448))
@@ -76,8 +76,8 @@ def get_argparser():
                         help='momentum (default: 0.9)')
     parser.add_argument("--batch_size", type=int, default=16,
                         help='batch size (default: 16)')
-    parser.add_argument("--exp_itr", type=int, default=8,
-                        help='repeat N times identical experiments (default: 8)')
+    parser.add_argument("--exp_itr", type=int, default=2,
+                        help='repeat N times identical experiments (default: 2)')
 
     parser.add_argument("--alpha", type=float, default=0.5,
                         help="alpha for KD loss (default: 0.5)")
