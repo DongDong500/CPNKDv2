@@ -157,8 +157,7 @@ def train(opts, devices, LOGDIR) -> dict:
 
     test_result = {}
 
-    for exp_itr in range(0, opts.exp_itr):
-
+    for exp_itr in range(0, opts.exp_itr):        
         for kftimes in range(0, opts.k_fold):
         
             #runs = sorted(glob.glob(os.path.join(LOGDIR, 'log', 'run_??')))

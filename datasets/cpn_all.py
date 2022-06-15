@@ -48,7 +48,7 @@ class CPNall(data.Dataset):
             raise RuntimeError('Dataset not found or corrupted.' +
                                ' You can use download=True to download it')
         
-        if kfold == 0:
+        if kfold == 1:
             splits_dir = os.path.join(cpn_root, 'splits')
             split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
         elif kfold > 1 and kfold < 11:
@@ -60,6 +60,9 @@ class CPNall(data.Dataset):
         if not os.path.exists(split_f):
             raise ValueError('Wrong image_set entered!' 
                              'Please use image_set="train" or image_set="val"')
+        
+        print("Datatype [%s]: " % self.image_set, self.datafolder)
+        print("Data file directory: %s" % split_f)
 
         with open(os.path.join(split_f), "r") as f:
             file_names = [x.strip() for x in f.readlines()]
