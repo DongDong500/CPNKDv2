@@ -40,7 +40,7 @@ class CPNall(data.Dataset):
         self.kfold = kfold
         self.kftimes = kftimes
 
-        cpn_root = os.path.join(self.root, datatype)
+        cpn_root = os.path.join(self.root, 'CPN_all')
         image_dir = os.path.join(cpn_root, 'Images')
         mask_dir = os.path.join(cpn_root, 'Masks')
 
@@ -49,10 +49,10 @@ class CPNall(data.Dataset):
                                ' You can use download=True to download it')
         
         if kfold == 1:
-            splits_dir = os.path.join(cpn_root, 'splits')
+            splits_dir = os.path.join(root, self.datafolder, 'splits')
             split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
         elif kfold > 1 and kfold < 11:
-            splits_dir = os.path.join(cpn_root, 'splits', 'cv' + str(kfold), str(kftimes))
+            splits_dir = os.path.join(root, self.datafolder, 'splits', 'cv' + str(kfold), str(kftimes))
             split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
         else:
             raise RuntimeError('Error: K-fold cv')
@@ -117,7 +117,7 @@ if __name__ == "__main__":
             ])
     
     dlist = ['CPN_FH', 'CPN_FN', 'CPN_FN+1', 'CPN_FN+2', 'CPN_FN+3', 'CPN_FN+4']
-    dlist = ['CPN_all']
+    dlist = ['CPN_six']
     for j in dlist:
             
         dst = CPNall(root='/data1/sdi/datasets', datatype=j, image_set='val',
