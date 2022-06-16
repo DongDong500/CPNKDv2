@@ -38,8 +38,8 @@ def get_dataset(opts, kftimes):
         et.ExtScale(scale=opts.scale_factor),
         et.ExtRandomVerticalFlip(),
         et.ExtToTensor(),
-        et.GaussianPerturb(std=opts.std),
         et.ExtNormalize(mean=mean, std=std),
+        et.GaussianPerturb(mean=0.44, std=opts.std)
         ])
     val_transform = et.ExtCompose([
         et.ExtResize(size=opts.resize),
