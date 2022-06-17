@@ -27,10 +27,7 @@ def cpn_six(root: str = '/', datatype:str = 'CPN_six', image_set:str = 'train',
     """ Peroneal nerve (six parts: FH, FN+0 ~ 4)
         410 samples
     """
-    if kfold == 0:
-        return CPN(root, datatype, image_set, transform, is_rgb)
-    else:
-        return CPNall(root, datatype, image_set, transform, is_rgb, kfold, kftimes)
+    return CPNall(root, datatype, image_set, transform, is_rgb, kfold, kftimes)
 
 def cpn_aug(root: str = '/', datatype:str = 'CPN_aug', image_set:str = 'train', 
             transform:ExtCompose = None, is_rgb:bool = True, kfold:int = 0, kftimes:int = 0):

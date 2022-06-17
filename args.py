@@ -48,6 +48,8 @@ def get_argparser():
                         help="choose True: RGB, False: grey (default: True)")
     parser.add_argument("--k_fold", type=int, default=5,
                         help="K-fold cross validation (default: 5)")
+    parser.add_argument("--is_aug", action='store_true', default=False,
+                        help="choose True: RGB, False: grey (default: True)")
     # Augmentation options
     parser.add_argument("--resize", default=(496, 468))
     parser.add_argument("--crop_size", default=(512, 448))
@@ -84,7 +86,7 @@ def get_argparser():
     parser.add_argument("--T", type=float, default=3,
                         help="temperature in KD loss (default: 3)")
     parser.add_argument("--std", type=float, default=0.01,
-                        help="sigma in gaussian perturbation (default: 0.01)")
+                        help="[train] sigma in gaussian perturbation (default: 0.01)")
     # Early stop options
     parser.add_argument("--patience", type=int, default=100,
                         help="Number of epochs with no improvement after which training will be stopped (default: 100)")
@@ -95,6 +97,8 @@ def get_argparser():
                         help="epoch interval for eval (default: 1)")
     parser.add_argument("--val_batch_size", type=int, default=4,
                         help='batch size for validate (default: 4)')
+    parser.add_argument("--val_std", type=float, default=0.01,
+                        help="[val] sigma in gaussian perturbation (default: 0.01)")
     # Test options
     parser.add_argument("--test_interval", type=int, default=1,
                         help="epoch interval for test (default: 1)")

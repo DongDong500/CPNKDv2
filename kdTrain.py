@@ -38,15 +38,15 @@ def get_dataset(opts, kftimes):
         et.ExtScale(scale=opts.scale_factor),
         et.ExtRandomVerticalFlip(),
         et.ExtToTensor(),
-        et.ExtNormalize(mean=mean, std=std),
-        et.GaussianPerturb(mean=0.44, std=opts.std)
+        et.ExtNormalize(mean=mean, std=std)
         ])
     val_transform = et.ExtCompose([
         et.ExtResize(size=opts.resize),
         et.ExtRandomCrop(size=opts.val_crop_size, pad_if_needed=True),
         et.ExtScale(scale=opts.scale_factor),
         et.ExtToTensor(),
-        et.ExtNormalize(mean=mean, std=std)
+        et.ExtNormalize(mean=mean, std=std),
+        et.GaussianPerturb(mean=0, std=opts.std)
         ])
 
     train_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, is_rgb=opts.is_rgb,
