@@ -48,8 +48,7 @@ def get_argparser():
                         help="choose True: RGB, False: grey (default: True)")
     parser.add_argument("--k_fold", type=int, default=5,
                         help="K-fold cross validation (default: 5)")
-    parser.add_argument("--is_aug", action='store_true', default=False,
-                        help="choose True: RGB, False: grey (default: True)")
+
     # Augmentation options
     parser.add_argument("--resize", default=(496, 468))
     parser.add_argument("--crop_size", default=(512, 448))
