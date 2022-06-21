@@ -15,7 +15,7 @@ class DeepLabV3(nn.Module):
 
         self.net = nn.Sequential(deeplabv3_resnet50(pretrained=True), 
                                 nn.Conv2d(21, 2, kernel_size=(1,1)))
-        
+
     def forward(self, x):
 
         #x1 = self.model(x)
