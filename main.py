@@ -62,7 +62,7 @@ if __name__ == '__main__':
     elif socket.gethostname() == "server4":
         opts.cur_work_server = 4
         opts.login_dir = LOGIN[4]
-        opts.default_path = os.path.join(DEFAULT_DIR[5], 
+        opts.default_path = os.path.join(DEFAULT_DIR[4], 
                                             os.path.dirname(os.path.abspath(__file__)).split('/')[-1]+'-result')
         opts.data_root = DATA_DIR[4]
     elif socket.gethostname() == "server5":
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         opts.loss_type = 'kd_loss'
         opts.s_model = 'deeplabv3plus_resnet50'
         opts.t_model = 'deeplabv3plus_resnet50'
-        opts.t_model_params = '/data1/sdi/CPNnetV1-result/deeplabv3plus_resnet50/May17_07-37-30_CPN_six/best_param/dicecheckpoint.pt'
+        opts.t_model_params = '/mnt/server5/sdi/CPNnetV1-result/deeplabv3plus_resnet50/May17_07-37-30_CPN_six/best_param/dicecheckpoint.pt'
         opts.output_stride = 32
         opts.t_output_stride = 32
 

@@ -73,22 +73,22 @@ class CPNall(data.Dataset):
             file_names = [x.strip() for x in f.readlines()]
 
         if is_aug and image_set == 'train':
-            self.images = [os.path.join(image_dir, x + ".bmp") for x in file_names]
-            self.gp_images = [os.path.join(gp_image_dir, x + ".bmp") for x in file_names]
-            self.rHE_images = [os.path.join(rHE_image_dir, x + ".bmp") for x in file_names]
-            self.HE_images = [os.path.join(HE_image_dir, x + ".bmp") for x in file_names]
-            self.masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
-            self.gp_masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
-            self.rHE_masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
-            self.HE_masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
-            
-            self.images.extend(self.gp_images)
-            self.images.extend(self.rHE_images)
-            self.images.extend(self.HE_images)
+            self.images = [os.path.join(image_dir, x + ".bmp") for x in file_names] + \
+                            [os.path.join(gp_image_dir, x + ".bmp") for x in file_names] + \
+                            [os.path.join(rHE_image_dir, x + ".bmp") for x in file_names] + \
+                            [os.path.join(HE_image_dir, x + ".bmp") for x in file_names] + \
+                            [os.path.join(image_dir, x + ".bmp") for x in file_names] + \
+                            [os.path.join(image_dir, x + ".bmp") for x in file_names] + \
+                            [os.path.join(image_dir, x + ".bmp") for x in file_names]
+            self.masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names] + \
+                            [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names] + \
+                            [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names] + \
+                            [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names] + \
+                            [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names] + \
+                            [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names] + \
+                            [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
 
-            self.masks.extend(self.gp_masks)
-            self.masks.extend(self.rHE_masks)
-            self.masks.extend(self.HE_masks)
+
         else:            
             self.images = [os.path.join(image_dir, x + ".bmp") for x in file_names]
             self.masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
