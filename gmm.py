@@ -1,7 +1,8 @@
 """A Gaussian mixture model class"""
 import numpy as np
+from tqdm import tqdm
 
-from numpy_ml.utils.misc import logsumexp, log_gaussian_pdf
+from utils.misc import logsumexp, log_gaussian_pdf
 
 
 class GMM(object):
@@ -119,7 +120,7 @@ class GMM(object):
         prev_vlb = -np.inf
         self._initialize_params(X)
 
-        for _iter in range(max_iter):
+        for _iter in tqdm(range(max_iter)):
             try:
                 self._E_step(X)
                 self._M_step(X)
