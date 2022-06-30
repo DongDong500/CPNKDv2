@@ -48,6 +48,7 @@ class CPNall(data.Dataset):
         gp_image_dir = os.path.join(self.root, 'CPN_all_GP/std010/Images')
         rHE_image_dir = os.path.join(self.root, 'CPN_all_rHE', 'Images')
         HE_image_dir = os.path.join(self.root, 'CPN_all_HE', 'Images')
+        gmm_image_dir = os.path.join(self.root, 'CPN_all_gmm/1sigma')
 
         if not os.path.exists(cpn_root):
             raise RuntimeError('Dataset not found or corrupted.' +
@@ -57,14 +58,15 @@ class CPNall(data.Dataset):
             splits_dir = os.path.join(root, self.datafolder, 'splits')
             split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
         elif kfold > 1 and kfold < 11:
-            splits_dir = os.path.join(root, self.datafolder, 'splits', 'cv' + str(kfold), str(kftimes))
+            splits_dir = os.path.join(root, 'CPN_all', 'splits', 'cv' + str(kfold), str(kftimes))
             split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
         else:
             raise RuntimeError('Error: K-fold cv')
 
         if not os.path.exists(split_f):
             raise ValueError('Wrong image_set entered!' 
-                             'Please use image_set="train" or image_set="val"')
+                             'Please use image_set="train" or image_set="val"'
+                             , split_f)
         
         print("Datatype [%s]: " % self.image_set, self.datafolder)
         print("Data file directory: %s" % split_f)
@@ -72,7 +74,7 @@ class CPNall(data.Dataset):
         with open(os.path.join(split_f), "r") as f:
             file_names = [x.strip() for x in f.readlines()]
 
-        if is_aug and image_set == 'train':
+        if is_aug and image_set == 'train' and self.datafolder == 'cpn_all':
             self.images = [os.path.join(image_dir, x + ".bmp") for x in file_names] + \
                             [os.path.join(gp_image_dir, x + ".bmp") for x in file_names] + \
                             [os.path.join(rHE_image_dir, x + ".bmp") for x in file_names] + \
@@ -87,9 +89,13 @@ class CPNall(data.Dataset):
                             [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names] + \
                             [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names] + \
                             [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
-
-
-        else:            
+        elif image_set == 'train' and self.datafolder == 'cpn_all_gmm':
+            self.images = [os.path.join(gmm_image_dir, x + ".bmp") for x in file_names]
+            self.masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
+        elif image_set == 'val' and self.datafolder == 'cpn_all_gmm':
+            self.images = [os.path.join(gmm_image_dir, x + ".bmp") for x in file_names]
+            self.masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
+        else:
             self.images = [os.path.join(image_dir, x + ".bmp") for x in file_names]
             self.masks = [os.path.join(mask_dir, x + "_mask.bmp") for x in file_names]
 

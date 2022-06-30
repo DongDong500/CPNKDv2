@@ -49,9 +49,9 @@ def get_dataset(opts, kftimes):
         et.GaussianPerturb(mean=0, std=opts.std)
         ])
 
-    train_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, is_rgb=opts.is_rgb,
+    train_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, datatype=opts.dataset, is_rgb=opts.is_rgb,
                                                     image_set='train', transform=train_transform, kfold=opts.k_fold, kftimes=kftimes)
-    val_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, is_rgb=opts.is_rgb,
+    val_dst = dt.getdata.__dict__[opts.dataset](root=opts.data_root, datatype=opts.dataset, is_rgb=opts.is_rgb,
                                                 image_set='val', transform=val_transform, kfold=opts.k_fold, kftimes=kftimes)
     
     return train_dst, val_dst

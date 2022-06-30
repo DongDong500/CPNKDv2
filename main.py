@@ -14,16 +14,19 @@ import utils
 
 
 LOGIN = {
+    2 : "/mnt/server5/sdi/login.json",
     3 : "/mnt/server5/sdi/login.json",
     4 : "/mnt/server5/sdi/login.json",
     5 : "/data1/sdi/login.json"
 }
 DEFAULT_DIR = {
+    2 : "/mnt/server5/sdi",
     3 : "/mnt/server5/sdi",
     4 : "/mnt/server5/sdi",
     5 : "/data1/sdi"
 }
 DATA_DIR = {
+    2 : "/mnt/server5/sdi/datasets",
     3 : "/mnt/server5/sdi/datasets",
     4 : "/mnt/server5/sdi/datasets",
     5 : "/data1/sdi/datasets"
@@ -71,6 +74,12 @@ if __name__ == '__main__':
         opts.default_path = os.path.join(DEFAULT_DIR[5], 
                                             os.path.dirname(os.path.abspath(__file__)).split('/')[-1]+'-result')
         opts.data_root = DATA_DIR[5]
+    elif socket.gethostname() == "server2":
+        opts.cur_work_server = 2
+        opts.login_dir = LOGIN[2]
+        opts.default_path = os.path.join(DEFAULT_DIR[2], 
+                                            os.path.dirname(os.path.abspath(__file__)).split('/')[-1]+'-result')
+        opts.data_root = DATA_DIR[2]
     else:
         raise NotImplementedError
     

@@ -22,6 +22,22 @@ def cpn_all(root: str = '/', datatype:str = 'CPN_all', image_set:str = 'train',
     """
     return CPNall(root, datatype, image_set, transform, is_rgb, kfold, kftimes)
 
+def cpn_all_gmm(root: str = '/', datatype:str = 'CPN_all_gmm', image_set:str = 'train', 
+                transform:ExtCompose = None, is_rgb:bool = True, kfold:int = 0, kftimes:int = 0):
+    """ Peroneal nerve (all parts: fiber head (FH), fibular neuropathy (FN+0 ~ 15), POP+0 ~ 5)
+        490 samples
+    
+    Args:
+        root (str): path to data parent directory (Ex: /data1/sdi/datasets). 
+        datatype (str): data folder name (default: CPN_all).
+        image_set (str): train/val or test (default: train).
+        transform (ExtCompose): composition of transform class.
+        is_rgb (bool): 3 input channel for True else False.
+        kfold (int): k-fold cross validation
+        kftimes (int): current iteration of cv
+    """
+    return CPNall(root, datatype, image_set, transform, is_rgb, kfold, kftimes)
+
 def cpn_six(root: str = '/', datatype:str = 'CPN_six', image_set:str = 'train', 
             transform:ExtCompose = None, is_rgb:bool = True, kfold:int = 0, kftimes:int = 0):
     """ Peroneal nerve (six parts: FH, FN+0 ~ 4)
